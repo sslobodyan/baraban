@@ -26,6 +26,8 @@ void setup_kanal() {
   for (byte i=0; i<NUM_CHANNELS; i++) {
     kanal[i].note = i+35;
     kanal[i].treshold = 0xFFFF;
+    kanal[i].velocity1 = 300;
+    kanal[i].velocity127 = 1300;
   }
 }
 
@@ -54,38 +56,4 @@ void show_buf(){ // чисто отладка
   }
 }
 
-void note_on(byte idx) { // играть ноту по индексу из буфера нот
-  //show_buf();
-  kanal[ notes[idx].kanal ].noteoff_time = millis() + cfg.noteoff_time;
-  LED_ON;
-  //if ( (TEST_KANAL_RED != notes[idx].kanal) & (TEST_KANAL_GREEN != notes[idx].kanal)) {
-    DBGserial.print(" ");
-    DBGserial.print( notes[idx].kanal );
-    DBGserial.print("=");
-    DBGserial.print( notes[head_notes].level );
-    DBGserial.print(" (+");
-    DBGserial.print( notes[head_notes].level - kanal[ notes[idx].kanal ].treshold );
-    DBGserial.print(")");
-    DBGserial.println();    
-  //}
-
-  if (TEST_KANAL_RED == notes[idx].kanal) {
-    RED_ON;
-  }
-
-  if (TEST_KANAL_GREEN == notes[idx].kanal) {
-    GREEN_ON;
-  }
-  
-  LED_OFF;
-}
-
-void note_off(byte ch) {
-  if (TEST_KANAL_RED == ch) {
-    RED_OFF;
-  }
-  if (TEST_KANAL_GREEN == ch) {
-    GREEN_OFF;
-  }
-}
 

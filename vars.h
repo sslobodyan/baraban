@@ -6,6 +6,8 @@
 #define MX_A010 PB4
 
 #define DBGserial Serial1 // A9
+#define MIDIserial Serial3 // B10
+#define DRUMS 10 // номер MIDI-канала в который передаем
 
 #define LED PC13
 #define LED_ON digitalWrite(LED, LOW)
@@ -22,8 +24,8 @@
 #define RED_OFF digitalWrite(RED_LED, LOW)
 #define RED_TOGGLE digitalWrite(RED_LED,!digitalRead(RED_LED))
 
-#define TEST_KANAL_GREEN 9
-#define TEST_KANAL_RED 25
+#define TEST_KANAL_GREEN 8
+#define TEST_KANAL_RED 16
 
 uint8_t ADC_1Sequence[4]={9,7,9,8};   
 uint8_t ADC_2Sequence[6]={9,4,9,5,9,6};   
@@ -46,6 +48,8 @@ struct stChannel {
   uint32_t scan_time; // до которого времени опрашивать на максимум
   uint32_t mute_time; // до которого времени не сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off
+  uint16_t velocity1; // уровень для громкости == 1
+  uint16_t velocity127; // уровень для громкости == 127
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
@@ -64,6 +68,7 @@ struct stNotes {
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
 
+/////////////////////////  Объявления функций //////////////////////////////////////
 
 void add_note(byte ch, uint16_t level);
 void store_autotreshold();

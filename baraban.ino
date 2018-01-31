@@ -1,9 +1,12 @@
 #include "arduino.h"
 #include <libmaple/dma.h>
+#include <MIDI.h>
+
 
 #include "vars.h"
 #include "adc.h"
 #include "utils.h"
+#include "midis.h"
 
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
@@ -23,6 +26,7 @@ void setup() {
   
   stop_scan = false;
   setup_kanal();
+  midiSetup();
 }
 
 void main_loop(){  
@@ -39,6 +43,9 @@ void main_loop(){
       }
     }
   }
+
+  MIDI.read();
+
 }
 
 void set_autotreshold(){
