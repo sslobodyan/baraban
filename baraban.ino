@@ -1,12 +1,13 @@
 #include "arduino.h"
 #include <libmaple/dma.h>
 #include <MIDI.h>
-
+#include <Wire.h>
 
 #include "vars.h"
 #include "adc.h"
 #include "utils.h"
 #include "midis.h"
+#include "mpr.h"
 
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
@@ -27,6 +28,9 @@ void setup() {
   stop_scan = false;
   setup_kanal();
   midiSetup();
+  DBGserial.print(" Search MPRs... ");
+  DBGserial.print( setup_touch() );
+  DBGserial.println();
 }
 
 void main_loop(){  
