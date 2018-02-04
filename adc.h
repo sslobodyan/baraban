@@ -10,13 +10,21 @@ void store_maximum() {
         if ( buf_adc[last_buf_idx][idx] > kanal[i].treshold ) { // превысили порог - начало удара
           kanal[i].scan_time = micros() + cfg.scan_time; // время завершения поиска максимума
           kanal[i].adc_max = buf_adc[last_buf_idx][idx];
+          kanal[i].cnt_over = 0;
         }
       } else { // уже ловим максимум
+        if ( buf_adc[last_buf_idx][idx] >= kanal[i].treshold ) {
+          kanal[i].cnt_over++; 
+        } else {
+          kanal[i].scan_time = 0; // приняли шумовой всплеск - перезапускаем сканирование     
+        }
         if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) kanal[i].adc_max = buf_adc[last_buf_idx][idx];
         if ( kanal[i].scan_time < micros() ) { // время сканирования максимума вышло
           kanal[i].scan_time = 0;
-          kanal[i].mute_time = micros() + cfg.mute_time; // запрещаем следующее сканирование
-          add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть
+          if (kanal[i].cnt_over >= cfg.cnt_over) { // набрали количество превышений порога - сигнал валидный
+            kanal[i].mute_time = micros() + cfg.mute_time; // запрещаем следующее сканирование
+            add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть        
+          }
         }
       }
     } 
@@ -54,6 +62,7 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
     default:
       digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); break;    
   }
+  delay_us(2); // задержимся пока сигналы не установятся
 }
 
 void setup_new_scan() {

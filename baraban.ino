@@ -13,7 +13,7 @@ void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
   
   DBGserial.begin(230400);
-  DBGserial.println("Started... ");
+  DBGserial.print("Started... ");
     
   setup_ADC();
   setup_DMA();
@@ -54,7 +54,7 @@ void main_loop(){
 
 void set_autotreshold(){
   DBGserial.print("Gather noise.. ");
-  delay (1000);
+  delay (cfg.autotreshold_time);
   for (byte i=0; i<NUM_CHANNELS; i++) {
     kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;    
     DBGserial.print( kanal[i].treshold );
