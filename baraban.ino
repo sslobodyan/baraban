@@ -26,10 +26,11 @@ void setup() {
   RED_OFF;
 
   pinMode(PC15, OUTPUT);
-  digitalWrite(PC15, LOW);
+  digitalWrite(PC15, HIGH);
   
   stop_scan = false;
   setup_kanal();
+  setup_krutilki();
   midiSetup();
   DBGserial.print(" Search MPRs... ");
   DBGserial.print( setup_touch() );
@@ -56,6 +57,8 @@ void main_loop(){
   }
 
   MIDI.read();
+
+  if ( millis() > 5000 ) digitalWrite(PC15, LOW); // debug
   
 }
 

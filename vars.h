@@ -24,8 +24,8 @@
 #define RED_OFF digitalWrite(RED_LED, LOW)
 #define RED_TOGGLE digitalWrite(RED_LED,!digitalRead(RED_LED))
 
-#define TEST_KANAL_GREEN 8
-#define TEST_KANAL_RED 16
+#define TEST_KANAL_GREEN 10
+#define TEST_KANAL_RED 0
 
 #define GND_SENSOR 16
 uint8_t ADC_1Sequence[4]={GND_SENSOR,7,GND_SENSOR,8};   
@@ -49,7 +49,7 @@ struct stChannel {
   byte note; // номер ноты
   uint32_t scan_time; // до которого времени опрашивать на максимум
   uint32_t mute_time; // до которого времени не сканировать кнопку или 0 если можно сканировать
-  uint32_t noteoff_time; // когда посылать note_off
+  uint32_t noteoff_time; // когда посылать note_off ms
   uint16_t velocity1; // уровень для громкости == 1
   uint16_t velocity127; // уровень для громкости == 127
   uint8_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
@@ -80,6 +80,7 @@ struct stKrutilka {
   uint8_t mx; // номер мультиплексора
   uint8_t ch; // номер канала (0-1)
   uint8_t gist; // гистерезис изменений 
+  void (*onChange)(); // обработчик при изменении значения крутилки
   // обработчик изменения
 } krutilka[ NUM_MULTIPLEXORS*2 ];
 uint8_t krutilka_idx; // текущая крутилка
@@ -89,5 +90,5 @@ uint8_t krutilka_idx; // текущая крутилка
 void add_note(byte ch, uint16_t level);
 void store_autotreshold();
 void update_krutilki();
-
+void setup_krutilki();
 
