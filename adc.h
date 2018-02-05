@@ -40,7 +40,15 @@ void store_maximum() {
 void store_autotreshold() {
   byte idx=1;
   for( byte i=0; i<NUM_CHANNELS; i++) {
-    if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) kanal[i].adc_max = buf_adc[last_buf_idx][idx];
+    if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) {
+      kanal[i].cnt_over += 1;
+      if (kanal[i].cnt_over >= cfg.cnt_over) {
+        kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
+        kanal[i].cnt_over = 0;
+      }
+    } else {
+      kanal[i].cnt_over = 0;
+    }
     idx += 2;
   } 
 }
@@ -62,7 +70,6 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
     default:
       digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); break;    
   }
-  delay_us(2); // задержимся пока сигналы не установятся
 }
 
 void setup_new_scan() {
@@ -86,7 +93,7 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
     }
     else {
       store_maximum();
-    }
+    } 
   }
   if (! stop_scan ) setup_new_scan(); // чисто отладка
 }
@@ -124,7 +131,7 @@ void setup_ADC() {
 
   last_buf_idx, buf_idx = 0;
   adc_set_prescaler(ADC_PRE_PCLK2_DIV_6); // 12 МГц тактовая АЦП (максимум 14)
-  adc_set_sample_rate(ADC1, ADC_SMPR_28_5); // 7.5+12.5 = 20 такта на выборку 1/12*20=1.667мкс выборка 1.5 7.5 13.5 28.5 41.5 55.5 71.5 239.5
+  adc_set_sample_rate(ADC1, ADC_SMPR_1_5); // 7.5+12.5 = 20 такта на выборку 1/12*20=1.667мкс выборка 1.5 7.5 13.5 28.5 41.5 55.5 71.5 239.5
   // для 1.5 один опрос сенсоров 14 тактов 19мкс ==1 
   // для 7.5 один опрос сенсоров 20 тактов 27мкс ==1 129us 32 канала
   // для 13.5 один опрос сенсоров 26 тактов 35мкс ==1 155us 32ch

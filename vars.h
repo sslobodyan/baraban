@@ -27,9 +27,10 @@
 #define TEST_KANAL_GREEN 8
 #define TEST_KANAL_RED 16
 
-uint8_t ADC_1Sequence[4]={9,7,9,8};   
-uint8_t ADC_2Sequence[6]={9,4,9,5,9,6};   
-uint8_t ADC_3Sequence[6]={9,1,9,2,9,3};   // входы с 1 - см схему, 0-контрольный, 9-земля
+#define GND_SENSOR 16
+uint8_t ADC_1Sequence[4]={GND_SENSOR,7,GND_SENSOR,8};   
+uint8_t ADC_2Sequence[6]={GND_SENSOR,4,GND_SENSOR,5,GND_SENSOR,6};   
+uint8_t ADC_3Sequence[6]={GND_SENSOR,1,GND_SENSOR,2,GND_SENSOR,3};   // входы с 1 - см схему, 0-контрольный, 9-земля
 
 #define BUFFER_CNT 10
 volatile byte last_buf_idx, buf_idx; // BUFFER_CNT буферов - пока один обрабатываем, во второй сканируются входы
@@ -56,7 +57,7 @@ struct stChannel {
 struct stConfig {
   uint16_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
   uint32_t mute_time = 60000; // us запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
-  uint16_t autotreshold_above = 30; // порог выше уровня шумов
+  uint16_t autotreshold_above = 5; // порог выше уровня шумов
   uint32_t noteoff_time = 500; // ms звучания ноты
   uint8_t cnt_over = 2; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
   uint16_t autotreshold_time = 1000; // ms настройки порогов после старта
