@@ -24,6 +24,9 @@ void setup() {
   GREEN_OFF;
   pinMode(RED_LED, OUTPUT);
   RED_OFF;
+
+  pinMode(PC15, OUTPUT);
+  digitalWrite(PC15, LOW);
   
   stop_scan = false;
   setup_kanal();
@@ -34,6 +37,10 @@ void setup() {
 }
 
 void main_loop(){  
+
+  update_krutilki(); // положение педалей-крутилок
+  // датчики касания
+
   while (head_notes != tail_notes) { // играть ноты из буфера нажатых нот
     if (++tail_notes >= NOTES_CNT) tail_notes=0;
     note_on(tail_notes);
@@ -49,7 +56,7 @@ void main_loop(){
   }
 
   MIDI.read();
-
+  
 }
 
 void set_autotreshold(){
@@ -60,6 +67,11 @@ void set_autotreshold(){
     DBGserial.print( kanal[i].treshold );
     DBGserial.print("  ");
     kanal[i].adc_max = 0;
+  }
+  DBGserial.println();
+  DBGserial.println("ADC2 > ");
+  for (byte i=0; i<NUM_MULTIPLEXORS; i++ ) {
+    DBGserial.print( buf_krutilka[ i ][0] );  DBGserial.print("\t"); DBGserial.println( buf_krutilka[ i ][1] );
   }
   DBGserial.println();
   scan_autotreshold = false;

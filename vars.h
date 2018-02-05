@@ -34,8 +34,9 @@ uint8_t ADC_3Sequence[6]={GND_SENSOR,1,GND_SENSOR,2,GND_SENSOR,3};   // вход
 
 #define BUFFER_CNT 10
 volatile byte last_buf_idx, buf_idx; // BUFFER_CNT буферов - пока один обрабатываем, во второй сканируются входы
-volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА буфер всех сканирований
-volatile bool adc_block;
+volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА буфер всех сканирований АЦП1
+
+volatile uint16_t buf_krutilka[ NUM_MULTIPLEXORS ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
 
 volatile int multi_idx; // номер включенного мультиплексора
 volatile int last_milti_idx; // номер предыдущего (только что считанного) мультиплексора
@@ -72,9 +73,21 @@ struct stNotes {
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
 
+struct stKrutilka {
+  uint16_t adc_1; // АЦП для 1
+  uint16_t adc_127; // АЦП для 127
+  uint8_t value; // в пересчете от 1 до 127
+  uint8_t mx; // номер мультиплексора
+  uint8_t ch; // номер канала (0-1)
+  uint8_t gist; // гистерезис изменений 
+  // обработчик изменения
+} krutilka[ NUM_MULTIPLEXORS*2 ];
+uint8_t krutilka_idx; // текущая крутилка
+
 /////////////////////////  Объявления функций //////////////////////////////////////
 
 void add_note(byte ch, uint16_t level);
 void store_autotreshold();
+void update_krutilki();
 
 

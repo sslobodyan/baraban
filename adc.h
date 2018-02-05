@@ -93,6 +93,10 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
       store_maximum();
     }  
   }
+  // состояние 0 и 9 каналов по АЦП2
+  buf_krutilka[ last_milti_idx  ][0] = ADC2->regs->JDR1; //
+  buf_krutilka[ last_milti_idx  ][1] = ADC2->regs->JDR3; //
+
   if (! stop_scan ) setup_new_scan(); // чисто отладка
 }
 
@@ -130,6 +134,7 @@ void setup_ADC() {
   last_buf_idx, buf_idx = 0;
   adc_set_prescaler(ADC_PRE_PCLK2_DIV_6); // 12 МГц тактовая АЦП (максимум 14)
   adc_set_sample_rate(ADC1, ADC_SMPR_1_5); // 7.5+12.5 = 20 такта на выборку 1/12*20=1.667мкс выборка 1.5 7.5 13.5 28.5 41.5 55.5 71.5 239.5
+  adc_set_sample_rate(ADC2, ADC_SMPR_1_5); // 
   // для 1.5 один опрос сенсоров 14 тактов 19мкс ==1 
   // для 7.5 один опрос сенсоров 20 тактов 27мкс ==1 129us 32 канала
   // для 13.5 один опрос сенсоров 26 тактов 35мкс ==1 155us 32ch
@@ -139,7 +144,8 @@ void setup_ADC() {
   // минимально 28,5 тактов иначе тянет хвост сигнала на следующий канал
   
   adc_calibrate(ADC1);
-  // загружаем последовательность сканирования каналов
+  adc_calibrate(ADC2);
+  // загружаем последовательность сканирования каналов АЦП1
   ADC1->regs->SQR3 |= calc_adc_SQR3(ADC_3Sequence);
   ADC1->regs->SQR2 |= calc_adc_SQR2(ADC_2Sequence);
   ADC1->regs->SQR1 |= calc_adc_SQR1(ADC_1Sequence);
@@ -147,7 +153,19 @@ void setup_ADC() {
 
   ADC1->regs->CR1 |= ADC_CR1_SCAN; // сканировать все регулярные каналы
   ADC1->regs->CR2 |= ADC_CR2_DMA; // Set DMA 
-  
+
+  ADC2->regs->CR2     =  ADC_CR2_JEXTSEL;      //выбрать источником запуска разряд  JSWSTART
+  ADC2->regs->CR2    |=  ADC_CR2_JEXTTRIG;     //разр. внешний запуск инжектированной группы
+  ADC2->regs->CR1    |=  ADC_CR1_SCAN;         //режим сканирования (т.е. несколько каналов)
+  ADC2->regs->CR1    |=  ADC_CR1_JAUTO;        //автомат. запуск инжектированной группы
+  ADC2->regs->CR2    |=  ADC_CR2_CONT;         //режим непрерывного преобразования 
+  ADC2->regs->JSQR    =  (uint32_t)(4-1)<<20;  //задаем количество каналов в инжектированной группе
+  ADC2->regs->JSQR   |=  (uint32_t)0<<(5*0);   //номер канала для первого преобразования             
+  ADC2->regs->JSQR   |=  (uint32_t)0<<(5*1);   //номер канала для первого преобразования             
+  ADC2->regs->JSQR   |=  (uint32_t)9<<(5*2);   //номер канала для второго преобразования
+  ADC2->regs->JSQR   |=  (uint32_t)9<<(5*3);   //номер канала для первого преобразования             
+  ADC2->regs->CR2    |=  ADC_CR2_ADON;         //включить АЦП
+  ADC2->regs->CR2    |=  ADC_CR2_JSWSTART;     //запустить процес преобразования
 }
 
 // calculate values for SQR3. Function could be extended to also work for SQR2 and SQR1. As is, you can sequence only 6 sequences per ADC

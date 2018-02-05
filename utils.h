@@ -56,4 +56,22 @@ void show_buf(){ // чисто отладка
   }
 }
 
+void update_krutilki() { // обработать krutilka_idx-крутилку
+  uint32_t tmp;
+  uint8_t old_value, new_value;
+  
+  old_value = krutilka[ krutilka_idx ].value;
+  tmp = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
+  new_value = map(tmp, krutilka[krutilka_idx].adc_1, krutilka[krutilka_idx].adc_127,  1, 127);
+  if (new_value < 1) new_value = 1;
+  if (new_value > 126) new_value = 127;
+
+  if ( abs(new_value - old_value) > krutilka[ krutilka_idx ].gist ) {
+    // существенное изменение положения
+    krutilka[ krutilka_idx ].value = new_value;
+    // если есть обработчик, то выполнить его
+  }
+  
+  if ( ++krutilka_idx >= NUM_MULTIPLEXORS*2 ) krutilka_idx = 0;
+}
 
