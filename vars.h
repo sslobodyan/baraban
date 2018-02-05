@@ -57,7 +57,7 @@ struct stChannel {
 struct stConfig {
   uint16_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
   uint32_t mute_time = 60000; // us запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
-  uint16_t autotreshold_above = 5; // порог выше уровня шумов
+  uint16_t autotreshold_above = 30; // порог выше уровня шумов
   uint32_t noteoff_time = 500; // ms звучания ноты
   uint8_t cnt_over = 2; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
   uint16_t autotreshold_time = 1000; // ms настройки порогов после старта

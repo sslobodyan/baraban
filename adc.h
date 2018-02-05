@@ -77,12 +77,10 @@ void setup_new_scan() {
   DMA1->regs->CNDTR1 = NUM_ADC*2; // повторно количество транзакций
   
   dma_enable(DMA1, DMA_CH1); // Enable the channel   
-  ADC1->regs->CR2 |= ADC_CR2_ADON; 
   ADC1->regs->CR2 |= ADC_CR2_SWSTART; // запускаем регулярное преобразование АЦП
 }
  
 static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили сбор - буфер одного мультиплексора заполнен 
-  ADC1->regs->CR2 &= ~ADC_CR2_ADON; // останавливаем АЦП
   dma_disable(DMA1, DMA_CH1); 
   
   next_multiplexor();
@@ -93,7 +91,7 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
     }
     else {
       store_maximum();
-    } 
+    }  
   }
   if (! stop_scan ) setup_new_scan(); // чисто отладка
 }
@@ -148,7 +146,7 @@ void setup_ADC() {
   adc_set_reg_seqlen(ADC1, NUM_ADC*2); // кол-во опрашиваемых каналов - через один заземленные
 
   ADC1->regs->CR1 |= ADC_CR1_SCAN; // сканировать все регулярные каналы
-  ADC1->regs->CR2 |= ADC_CR2_CONT | ADC_CR2_DMA; // Set DMA 
+  ADC1->regs->CR2 |= ADC_CR2_DMA; // Set DMA 
   
 }
 
