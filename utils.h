@@ -56,47 +56,4 @@ void show_buf(){ // чисто отладка
   }
 }
 
-void update_krutilki() { // обработать krutilka_idx-крутилку
-  uint32_t tmp;
-  uint8_t old_value, new_value;
-  
-  old_value = krutilka[ krutilka_idx ].value;
-  tmp = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
-  new_value = map(tmp, krutilka[krutilka_idx].adc_1, krutilka[krutilka_idx].adc_127,  1, 127);
-  if (new_value < 1) new_value = 1;
-  if (new_value > 126) new_value = 127;
-
-  if ( abs(new_value - old_value) > krutilka[ krutilka_idx ].gist ) {
-    // существенное изменение положения
-    krutilka[ krutilka_idx ].value = new_value;
-    // если есть обработчик, то выполнить его
-    if ( krutilka[ krutilka_idx ].onChange ) {
-      krutilka[ krutilka_idx ].onChange();
-    }
-  }
-  
-  if ( ++krutilka_idx >= NUM_MULTIPLEXORS*2 ) krutilka_idx = 0;
-}
-
-void setNoteLength() { // обработчик 0 крутилки - время звучания ноты
-  DBGserial.print("Length=");DBGserial.println(krutilka[0].value);
-  cfg.noteoff_time = krutilka[0].value * 100;
-}
-
-void setup_krutilki() { // задать параметры крутилкам
-  // 0 - длительность звучания ноты
-  krutilka[ 0 ].adc_1 = 15;
-  krutilka[ 0 ].adc_127 = 3950;
-  krutilka[ 0 ].mx = 0;
-  krutilka[ 0 ].ch = 0;
-  krutilka[ 0 ].gist = 2;
-  krutilka[ 0 ].onChange = setNoteLength;
-  
-  // 1 - педаль
-  krutilka[ 1 ].adc_1 = 15;
-  krutilka[ 1 ].adc_127 = 3950;
-  krutilka[ 1 ].mx = 0;
-  krutilka[ 1 ].ch = 1;
-  krutilka[ 1 ].gist = 5;
-}
 

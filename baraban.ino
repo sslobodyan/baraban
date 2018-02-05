@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "midis.h"
 #include "mpr.h"
+#include "krutilki.h"
 
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
