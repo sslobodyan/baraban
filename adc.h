@@ -3,12 +3,13 @@ uint32 calc_adc_SQR2(uint8 adc_sequence[6]);
 uint32 calc_adc_SQR1(uint8 adc_sequence[4]);
 
 void store_maximum() {
-  byte idx=1;
-  for( byte i=0; i<NUM_CHANNELS; i++) {
+  uint32_t idx=1;
+  for( uint32_t i=0; i<NUM_CHANNELS; i++) {
     if ( kanal[i].mute_time == 0 ) { // разрешено сканирование канала
       if ( kanal[i].scan_time == 0 ) { // еще не начинали сканировать - порог пока не превышен
         if ( buf_adc[last_buf_idx][idx] > kanal[i].treshold ) { // превысили порог - начало удара
           kanal[i].scan_time = micros() + cfg.scan_time; // время завершения поиска максимума
+          if (kanal[i].scan_time == 0) kanal[i].scan_time = 1;
           kanal[i].adc_max = buf_adc[last_buf_idx][idx];
           kanal[i].cnt_over = 0;
         }
@@ -23,6 +24,7 @@ void store_maximum() {
           kanal[i].scan_time = 0;
           if (kanal[i].cnt_over >= cfg.cnt_over) { // набрали количество превышений порога - сигнал валидный
             kanal[i].mute_time = micros() + cfg.mute_time; // запрещаем следующее сканирование
+            if (kanal[i].mute_time == 0) kanal[i].mute_time = 1;
             add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть        
           }
         }
@@ -81,6 +83,8 @@ void setup_new_scan() {
 }
  
 static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили сбор - буфер одного мультиплексора заполнен 
+  LED_OFF;
+  
   dma_disable(DMA1, DMA_CH1); 
   
   // состояние 0 и 9 каналов по АЦП2 до смены мультиплексора!
@@ -99,6 +103,8 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
   }
 
   if (! stop_scan ) setup_new_scan(); // чисто отладка
+  
+  LED_ON;
 }
 
 void setup_DMA() {
@@ -135,7 +141,7 @@ void setup_ADC() {
   last_buf_idx, buf_idx = 0;
   adc_set_prescaler(ADC_PRE_PCLK2_DIV_6); // 12 МГц тактовая АЦП (максимум 14)
   adc_set_sample_rate(ADC1, ADC_SMPR_1_5); // 7.5+12.5 = 20 такта на выборку 1/12*20=1.667мкс выборка 1.5 7.5 13.5 28.5 41.5 55.5 71.5 239.5
-  adc_set_sample_rate(ADC2, ADC_SMPR_1_5); // 
+  adc_set_sample_rate(ADC2, ADC_SMPR_7_5); // 
   // для 1.5 один опрос сенсоров 14 тактов 19мкс ==1 
   // для 7.5 один опрос сенсоров 20 тактов 27мкс ==1 129us 32 канала
   // для 13.5 один опрос сенсоров 26 тактов 35мкс ==1 155us 32ch

@@ -38,7 +38,7 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
 
   MIDI.sendNoteOn( kanal[ch].note , velocity, DRUMS);
 
-  LED_ON;
+  //LED_ON;
   if ( (TEST_KANAL_RED != ch) & (TEST_KANAL_GREEN != ch) ) { // вывод отчета по кроссталку
     DBGserial.print(" ");
     DBGserial.print( ch );
@@ -47,6 +47,13 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
     DBGserial.print(" (+");
     DBGserial.print( notes[head_notes].level - kanal[ch].treshold );
     DBGserial.print(")");
+    DBGserial.println();    
+  } else {
+    DBGserial.print( ch );
+    DBGserial.print("\t");    
+    DBGserial.print( ch );
+    DBGserial.print("\t");    
+    for (byte i=0; i<(velocity+4)/8; i++) DBGserial.print("=");
     DBGserial.println();    
   }
 
@@ -57,8 +64,7 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   if (TEST_KANAL_GREEN == ch) {
     GREEN_ON;
   }
-  
-  LED_OFF;
+  //LED_OFF;
 }
 
 void note_off(byte ch) {

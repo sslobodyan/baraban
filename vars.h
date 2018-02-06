@@ -1,4 +1,4 @@
-#define NUM_MULTIPLEXORS 4 // обычно 4
+#define NUM_MULTIPLEXORS 8 // обычно 4
 #define NUM_ADC 8 // обычно 8
 #define NUM_CHANNELS NUM_ADC*NUM_MULTIPLEXORS
 
@@ -44,24 +44,24 @@ volatile int last_milti_idx; // номер предыдущего (только 
 bool scan_autotreshold = true; // признак сбора данных для автотрешолда
 
 struct stChannel {
-  uint16_t adc_max; // максимум с момента превышения порога
-  uint16_t treshold; // порог уровня удара
+  uint32_t adc_max; // максимум с момента превышения порога
+  uint32_t treshold; // порог уровня удара
   byte note; // номер ноты
   uint32_t scan_time; // до которого времени опрашивать на максимум
   uint32_t mute_time; // до которого времени не сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off ms
-  uint16_t velocity1; // уровень для громкости == 1
-  uint16_t velocity127; // уровень для громкости == 127
-  uint8_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
+  uint32_t velocity1; // уровень для громкости == 1
+  uint32_t velocity127; // уровень для громкости == 127
+  uint32_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
-  uint16_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
-  uint32_t mute_time = 60000; // us запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
-  uint16_t autotreshold_above = 30; // порог выше уровня шумов
+  uint32_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
+  uint32_t mute_time = 80000; // us запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
+  uint32_t autotreshold_above = 30; // порог выше уровня шумов
   uint32_t noteoff_time = 500; // ms звучания ноты
-  uint8_t cnt_over = 2; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
-  uint16_t autotreshold_time = 1000; // ms настройки порогов после старта
+  uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
+  uint32_t autotreshold_time = 1000; // ms настройки порогов после старта
   uint8_t pedal = 0; // состояние педали 0 - 63 - 127
 } cfg;
 
