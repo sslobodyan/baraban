@@ -53,7 +53,7 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
     DBGserial.print("\t");    
     DBGserial.print( ch );
     DBGserial.print("\t");    
-    for (byte i=0; i<(velocity+4)/8; i++) DBGserial.print("=");
+    for (byte i=0; i<(velocity+8)/8; i++) DBGserial.print("=");
     DBGserial.println();    
   }
 

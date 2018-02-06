@@ -1,9 +1,10 @@
-#define NUM_MULTIPLEXORS 8 // обычно 4
+#define NUM_MULTIPLEXORS 4 // обычно 4
 #define NUM_ADC 8 // обычно 8
 #define NUM_CHANNELS NUM_ADC*NUM_MULTIPLEXORS
 
 #define MX_A001 PB3
 #define MX_A010 PB4
+#define MX_A100 PB5
 
 #define DBGserial Serial1 // A9
 #define MIDIserial Serial3 // B10
@@ -47,8 +48,8 @@ struct stChannel {
   uint32_t adc_max; // максимум с момента превышения порога
   uint32_t treshold; // порог уровня удара
   byte note; // номер ноты
-  uint32_t scan_time; // до которого времени опрашивать на максимум
-  uint32_t mute_time; // до которого времени не сканировать кнопку или 0 если можно сканировать
+  uint32_t scan_time; // us времени начала опроса на максимум
+  uint32_t mute_time; // ms время начала запрета сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off ms
   uint32_t velocity1; // уровень для громкости == 1
   uint32_t velocity127; // уровень для громкости == 127
@@ -57,8 +58,8 @@ struct stChannel {
 
 struct stConfig {
   uint32_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
-  uint32_t mute_time = 80000; // us запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
-  uint32_t autotreshold_above = 30; // порог выше уровня шумов
+  uint32_t mute_time = 60; // ms запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
+  uint32_t autotreshold_above = 50; // порог выше уровня шумов
   uint32_t noteoff_time = 500; // ms звучания ноты
   uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
   uint32_t autotreshold_time = 1000; // ms настройки порогов после старта

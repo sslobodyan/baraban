@@ -8,7 +8,7 @@ void store_maximum() {
     if ( kanal[i].mute_time == 0 ) { // разрешено сканирование канала
       if ( kanal[i].scan_time == 0 ) { // еще не начинали сканировать - порог пока не превышен
         if ( buf_adc[last_buf_idx][idx] > kanal[i].treshold ) { // превысили порог - начало удара
-          kanal[i].scan_time = micros() + cfg.scan_time; // время завершения поиска максимума
+          kanal[i].scan_time = micros(); // время начала поиска максимума
           if (kanal[i].scan_time == 0) kanal[i].scan_time = 1;
           kanal[i].adc_max = buf_adc[last_buf_idx][idx];
           kanal[i].cnt_over = 0;
@@ -20,10 +20,10 @@ void store_maximum() {
           kanal[i].scan_time = 0; // приняли шумовой всплеск - перезапускаем сканирование     
         }
         if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) kanal[i].adc_max = buf_adc[last_buf_idx][idx];
-        if ( kanal[i].scan_time < micros() ) { // время сканирования максимума вышло
+        if ( micros() - kanal[i].scan_time > cfg.scan_time  ) { // время сканирования максимума вышло
           kanal[i].scan_time = 0;
           if (kanal[i].cnt_over >= cfg.cnt_over) { // набрали количество превышений порога - сигнал валидный
-            kanal[i].mute_time = micros() + cfg.mute_time; // запрещаем следующее сканирование
+            kanal[i].mute_time = millis(); // запрещаем следующее сканирование
             if (kanal[i].mute_time == 0) kanal[i].mute_time = 1;
             add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть        
           }
@@ -31,8 +31,10 @@ void store_maximum() {
       }
     } 
     else { // контроль времени запрета сканирования
-      if ( kanal[i].mute_time < micros() ) { // время вышло, можно разрешать новое сканирование
-        kanal[i].mute_time = 0;
+      if ( millis() - kanal[i].mute_time > cfg.mute_time ) { // время вышло, можно разрешать новое сканирование
+        if ( buf_adc[last_buf_idx][idx] <= kanal[i].treshold ) { // уровень ниже порога - разрешаем новое сканированеи
+          kanal[i].mute_time = 0;  
+        }
       }
     }
     idx += 2;
@@ -64,13 +66,21 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
   }
   switch (multi_idx) {
     case 0:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); break;
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
     case 1:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); break;
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
     case 2:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); break;
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 0); break;
+    case 3:
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 0); break;    
+    case 4:
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 1); break;
+    case 5:
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 1); break;
+    case 6:
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 1); break;
     default:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); break;    
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 1);     
   }
 }
 
@@ -135,8 +145,10 @@ void setup_ADC() {
   // управление мультиплексором
   pinMode(MX_A001, OUTPUT);
   pinMode(MX_A010, OUTPUT);
+  pinMode(MX_A100, OUTPUT);
   digitalWrite(MX_A001, LOW);
   digitalWrite(MX_A010, LOW);
+  digitalWrite(MX_A100, LOW);
 
   last_buf_idx, buf_idx = 0;
   adc_set_prescaler(ADC_PRE_PCLK2_DIV_6); // 12 МГц тактовая АЦП (максимум 14)
