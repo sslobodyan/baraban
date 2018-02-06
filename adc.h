@@ -83,6 +83,10 @@ void setup_new_scan() {
 static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили сбор - буфер одного мультиплексора заполнен 
   dma_disable(DMA1, DMA_CH1); 
   
+  // состояние 0 и 9 каналов по АЦП2 до смены мультиплексора!
+  buf_krutilka[ multi_idx  ][0] = ADC2->regs->JDR1; //
+  buf_krutilka[ multi_idx  ][1] = ADC2->regs->JDR3; //
+
   next_multiplexor();
 
   if (multi_idx == 0) { // прошли по всем мультиплексорам - отсканированы все датчики    
@@ -93,9 +97,6 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
       store_maximum();
     }  
   }
-  // состояние 0 и 9 каналов по АЦП2
-  buf_krutilka[ last_milti_idx  ][0] = ADC2->regs->JDR1; //
-  buf_krutilka[ last_milti_idx  ][1] = ADC2->regs->JDR3; //
 
   if (! stop_scan ) setup_new_scan(); // чисто отладка
 }
