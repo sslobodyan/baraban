@@ -23,9 +23,17 @@ void update_krutilki() { // обработать krutilka_idx-крутилку
   if ( ++krutilka_idx >= NUM_MULTIPLEXORS*2 ) krutilka_idx = 0;
 }
 
+//////////////////////////////////////////////////////////////////////////
+//
+//                   Обработчики крутилок и педалей
+//
+//////////////////////////////////////////////////////////////////////////
+
 void setNoteLength() { // обработчик 0 крутилки - время звучания ноты
   DBGserial.print("Length=");DBGserial.println(krutilka[ krutilkaNoteLength ].value);
   cfg.noteoff_time = krutilka[ krutilkaNoteLength ].value * 100;
+  MIDI_Master.sendControlChange( CC_NOTE_LENGTH, cfg.noteoff_time, DRUMS );
+  MIDI_Slave.sendControlChange( CC_NOTE_LENGTH, cfg.noteoff_time, DRUMS );
 }
 
 void setPedal() { // обработчик 1 крутилки - состояние педали
@@ -34,8 +42,16 @@ void setPedal() { // обработчик 1 крутилки - состояни�
   } else if ( krutilka[ krutilkaPedal ].value < 42 ) {
     cfg.pedal = 0;  
   } else cfg.pedal = 63;  
+  // отсылаем все сообщение о педали
+  MIDI_Master.sendControlChange( CC_FOOT_PEDAL, cfg.pedal, DRUMS );
+  MIDI_Slave.sendControlChange( CC_FOOT_PEDAL, cfg.pedal, DRUMS );
   DBGserial.print("Pedal=");DBGserial.println( cfg.pedal );  
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+// Параметры по умолчанию для всех крутилок
+//////////////////////////////////////////////////////////////////////////
 
 void setup_krutilki() { // задать параметры крутилкам
   // 0 - длительность звучания ноты
@@ -46,7 +62,7 @@ void setup_krutilki() { // задать параметры крутилкам
   krutilka[ krutilkaNoteLength ].gist = 2;
   krutilka[ krutilkaNoteLength ].onChange = setNoteLength;
   
-  // 1 - педаль
+  // 1 - основная педаль сустейна
   krutilka[ krutilkaPedal ].adc_1 = 15;
   krutilka[ krutilkaPedal ].adc_127 = 3950;
   krutilka[ krutilkaPedal ].mx = 0;

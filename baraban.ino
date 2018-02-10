@@ -57,7 +57,8 @@ void main_loop(){
     }
   }
 
-  MIDI.read();
+  MIDI_Master.read();
+  MIDI_Slave.read();
 
   if ( millis() > 5000 ) digitalWrite(PC15, LOW); // debug
   

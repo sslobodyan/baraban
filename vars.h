@@ -8,6 +8,7 @@
 
 #define DBGserial Serial1 // A9
 #define MIDIserial Serial3 // B10
+
 #define DRUMS 10 // номер MIDI-канала в который передаем
 
 #define LED PC13
