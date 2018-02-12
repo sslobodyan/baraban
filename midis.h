@@ -97,6 +97,8 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   if (velocity > 126) velocity=127;
   if (velocity < 1) velocity=0;
 
+  // ToDo Здесь по типу входа определяем играть ноту или выполнить обработчик крутилки
+
   MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);
 
   //LED_ON;

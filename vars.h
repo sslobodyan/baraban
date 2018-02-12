@@ -46,15 +46,18 @@ volatile int last_milti_idx; // номер предыдущего (только 
 bool scan_autotreshold = true; // признак сбора данных для автотрешолда
 
 struct stChannel {
-  uint32_t adc_max; // максимум с момента превышения порога
+  // настройка
   uint32_t treshold; // порог уровня удара
   byte note; // номер ноты
+  uint32_t velocity1; // уровень для громкости == 1
+  uint32_t velocity127; // уровень для громкости == 127
+  // рассчетные
+  uint32_t adc_max; // максимум с момента превышения порога
   uint32_t scan_time; // us времени начала опроса на максимум
   uint32_t mute_time; // ms время начала запрета сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off ms
-  uint32_t velocity1; // уровень для громкости == 1
-  uint32_t velocity127; // уровень для громкости == 127
   uint32_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
+  
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
@@ -83,7 +86,7 @@ struct stKrutilka {
   uint8_t mx; // номер мультиплексора
   uint8_t ch; // номер канала (0-1)
   uint8_t gist; // гистерезис изменений 
-  void (*onChange)(); // обработчик при изменении значения крутилки
+  void (*onChange)(uint8_t idx); // обработчик при изменении значения крутилки IDX
   // обработчик изменения
 } krutilka[ NUM_MULTIPLEXORS*2 ];
 uint8_t krutilka_idx; // текущая крутилка
