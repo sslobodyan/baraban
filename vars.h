@@ -102,7 +102,7 @@ struct stKrutilka {
   void (*onChange)(uint8_t idx); // обработчик при изменении значения крутилки IDX
   // обработчик изменения
 } krutilka[ KRUTILKI_CNT ];
-uint8_t krutilka_idx; // текущая крутилка
+uint8_t krutilka_idx; // текущая обрабатываемая крутилка
 uint8_t multi_krutilka_idx; // индекс канала мультиплексора крутилок
 volatile uint16_t buf_krutilka[ KRUTILKI_CNT ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
 

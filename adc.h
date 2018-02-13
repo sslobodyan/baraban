@@ -60,17 +60,24 @@ void store_autotreshold() {
   } 
 }
 
+static bool bit_c;
 void  next_multiplexor(){ // выбрать следующий мультиплексор
   last_milti_idx = multi_idx; // запоминаем какой мультиплексор просканировали
+
+  if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
+  
   if (++multi_idx >= NUM_MULTIPLEXORS) {
     multi_idx = 0; // новый проход по всем мультиплексорам
     last_buf_idx = buf_idx;
-    if (++buf_idx >= BUFFER_CNT) buf_idx=0;
+    if (++buf_idx >= BUFFER_CNT) {
+      buf_idx=0;
+      bit_c = !bit_c;
+    }
   }
   
-  if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
+  multi_krutilka_idx = multi_idx << 1 | bit_c;
   
-  switch (multi_krutilka_idx) {
+  switch (multi_idx) {
     case 0:
       digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
     case 1:
