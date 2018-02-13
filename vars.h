@@ -2,9 +2,9 @@
 #define NUM_ADC 8 // обычно 8
 #define NUM_CHANNELS NUM_ADC*NUM_MULTIPLEXORS
 
-#define MX_A001 PB3
-#define MX_A010 PB4
-#define MX_A100 PB5
+#define MX_A001 PB3 // A
+#define MX_A010 PB4 // B
+#define MX_A100 PA15 // C
 
 #define DBGserial Serial1 // A9
 #define MIDIserial Serial3 // B10
@@ -38,7 +38,19 @@ uint8_t ADC_3Sequence[6]={GND_SENSOR,1,GND_SENSOR,2,GND_SENSOR,3};   // вход
 volatile byte last_buf_idx, buf_idx; // BUFFER_CNT буферов - пока один обрабатываем, во второй сканируются входы
 volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА буфер всех сканирований АЦП1
 
-volatile uint16_t buf_krutilka[ NUM_MULTIPLEXORS ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
+#define LAST_NOTE 109 // последняя нота как нота - следующие это крутилки
+
+// на каких номерах нот какие обработчики крутилок
+#define POT_VELOCITY1 110
+#define POT_VELOCITY127 111
+#define POT_LENGTH 112
+#define POT_VOLUME 113
+
+#define PEDAL_SUSTAIN 114
+#define PEDAL_VOICE 115
+#define PEDAL_OCTAVE 116
+#define PEDAL_PROGRAM 117
+#define PEDAL_PANIC 118
 
 volatile int multi_idx; // номер включенного мультиплексора
 volatile int last_milti_idx; // номер предыдущего (только что считанного) мультиплексора
@@ -79,17 +91,24 @@ struct stNotes {
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
 
+#define KRUTILKI_CNT 16 // максимальное число крутилок на одном канале мх
 struct stKrutilka {
-  uint16_t adc_1; // АЦП для 1
-  uint16_t adc_127; // АЦП для 127
+  uint16_t velocity1; // АЦП для 1
+  uint16_t velocity127; // АЦП для 127
   uint8_t value; // в пересчете от 1 до 127
-  uint8_t mx; // номер мультиплексора
-  uint8_t ch; // номер канала (0-1)
+  uint8_t mx; // номер мультиплексора ( 0..3 )
+  uint8_t ch; // номер канала ( 0..1 )
   uint8_t gist; // гистерезис изменений 
   void (*onChange)(uint8_t idx); // обработчик при изменении значения крутилки IDX
   // обработчик изменения
-} krutilka[ NUM_MULTIPLEXORS*2 ];
+} krutilka[ KRUTILKI_CNT ];
 uint8_t krutilka_idx; // текущая крутилка
+uint8_t multi_krutilka_idx; // индекс канала мультиплексора крутилок
+volatile uint16_t buf_krutilka[ KRUTILKI_CNT ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
+
+
+void (*handl)(uint8_t tp); // глобальная переменная с адресом обработчика крутилки
+
 
 /////////////////////////  Объявления функций //////////////////////////////////////
 
@@ -97,4 +116,4 @@ void add_note(byte ch, uint16_t level);
 void store_autotreshold();
 void update_krutilki();
 void setup_krutilki();
-
+void set_handl(uint8_t tp);

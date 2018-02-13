@@ -40,7 +40,7 @@ void setup() {
 
 void main_loop(){  
 
-  update_krutilki(); // положение педалей-крутилок
+  update_krutilki(); // положение текущей педали-крутилки на центральном модуле
   // датчики касания
 
   while (head_notes != tail_notes) { // играть ноты из буфера нажатых нот

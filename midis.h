@@ -8,6 +8,7 @@
 
 // собственные команды
 #define CC_NOTE_LENGTH 9
+#define CC_NUM_CHANNEL 3 // выдает номер канала со сработкой - для настройки
 
 
 struct MySettings : public midi::DefaultSettings
@@ -56,6 +57,8 @@ void doControlChangeSlave(byte channel, byte number, byte value) {
     }
 }
 
+
+
 void doNoteMaster(byte channel, byte note, byte velocity) {
   // пока на мастере все ноты игнорим
 }
@@ -91,15 +94,14 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   byte ch = notes[idx].kanal;
   uint16_t level = notes[idx].level;
   
-  kanal[ch].noteoff_time = millis() + cfg.noteoff_time;
-
   int16_t velocity = map( level , kanal[ch].velocity1, kanal[ch].velocity127, 1, 127);
   if (velocity > 126) velocity=127;
   if (velocity < 1) velocity=0;
 
-  // ToDo Здесь по типу входа определяем играть ноту или выполнить обработчик крутилки
+  MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
+  kanal[ch].noteoff_time = millis() + cfg.noteoff_time;
 
-  MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);
+  MIDI_Master.sendControlChange( CC_NUM_CHANNEL, ch, DRUMS ); // ToDo для отладки шлем номер сработавшего канала
 
   //LED_ON;
   if ( (TEST_KANAL_RED != ch) & (TEST_KANAL_GREEN != ch) ) { // вывод отчета по кроссталку
@@ -131,7 +133,9 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
 }
 
 void note_off(byte ch) {
-  MIDI_Master.sendNoteOff( kanal[ch].note , 127, DRUMS);
+  
+  MIDI_Master.sendNoteOff( kanal[ch].note , 0, DRUMS);
+
   if (TEST_KANAL_RED == ch) {
     RED_OFF;
   }

@@ -67,7 +67,10 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
     last_buf_idx = buf_idx;
     if (++buf_idx >= BUFFER_CNT) buf_idx=0;
   }
-  switch (multi_idx) {
+  
+  if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
+  
+  switch (multi_krutilka_idx) {
     case 0:
       digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
     case 1:
@@ -101,8 +104,8 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
   dma_disable(DMA1, DMA_CH1); 
   
   // состояние 0 и 9 каналов по АЦП2 до смены мультиплексора!
-  buf_krutilka[ multi_idx  ][0] = ADC2->regs->JDR1; //
-  buf_krutilka[ multi_idx  ][1] = ADC2->regs->JDR3; //
+  buf_krutilka[ multi_krutilka_idx  ][0] = ADC2->regs->JDR1; //
+  buf_krutilka[ multi_krutilka_idx  ][1] = ADC2->regs->JDR3; //
 
   next_multiplexor();
 
