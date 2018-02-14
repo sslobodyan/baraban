@@ -69,31 +69,23 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
   if (++multi_idx >= NUM_MULTIPLEXORS) {
     multi_idx = 0; // новый проход по всем мультиплексорам
     last_buf_idx = buf_idx;
+    bit_c = !bit_c;
     if (++buf_idx >= BUFFER_CNT) {
       buf_idx=0;
-      bit_c = !bit_c;
     }
   }
   
-  multi_krutilka_idx = multi_idx << 1 | bit_c;
+  multi_krutilka_idx = multi_idx * 2 + bit_c;
   
   switch (multi_idx) {
     case 0:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, bit_c); break;
     case 1:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 0); break;
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, bit_c); break;
     case 2:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 0); break;
-    case 3:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 0); break;    
-    case 4:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 1); break;
-    case 5:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, 1); break;
-    case 6:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 1); break;
+      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, bit_c); break;
     default:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, 1);     
+      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, bit_c);     
   }
 }
 

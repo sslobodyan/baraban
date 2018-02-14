@@ -19,14 +19,14 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
 
   }
       
-//    DBGserial.print("kr ");
-//    DBGserial.print( krutilka_idx );
-//    DBGserial.print("=");
-//    DBGserial.print( new_value );
-//    DBGserial.print("=");
-//    DBGserial.print( tmp );
-//    DBGserial.print("\t");
-//    if (krutilka_idx == KRUTILKI_CNT-1 ) DBGserial.println();
+    DBGserial.print("kr ");
+    DBGserial.print( krutilka_idx );
+    //DBGserial.print("=");
+    //DBGserial.print( new_value );
+    DBGserial.print("=");
+    DBGserial.print( tmp );
+    DBGserial.print("\t");
+    if (krutilka_idx == KRUTILKI_CNT-1 ) DBGserial.println();
       
   if ( ++krutilka_idx >= KRUTILKI_CNT ) krutilka_idx = 0;
 }
@@ -119,9 +119,11 @@ void set_type(uint8_t idx, uint8_t tp) { // назначаем крутилке 
 void setup_krutilki() { // задать начальные параметры крутилкам
   for( byte i=0; i<KRUTILKI_CNT; i++) {
     krutilka[i].onChange = NULL;
-    krutilka[i].gist = 2000;
+    krutilka[i].gist = 255;
+    krutilka[i].mx = i % 8;
+    krutilka[i].ch = i % 4;
   }
-  
+/*  
   // 0 - длительность звучания ноты
   krutilka[ krutilkaNoteLength ].velocity1 = 30;
   krutilka[ krutilkaNoteLength ].velocity127 = 3950;
@@ -137,5 +139,6 @@ void setup_krutilki() { // задать начальные параметры к
   krutilka[ krutilkaPedal ].ch = 0;
   krutilka[ krutilkaPedal ].gist = 255;
   set_type( krutilkaPedal , PEDAL_SUSTAIN );
+*/  
 }
 
