@@ -56,6 +56,21 @@ void setup_module() { // по перемычкам определить тип �
   }
 }
 
+void show_buf_krutilka() {
+  DBGserial.println("buf_krutilka > ");
+  for (byte i=0; i<KRUTILKI_CNT/2; i++ ) {
+    DBGserial.print("["); DBGserial.print(i);DBGserial.print("][0] ");
+    DBGserial.print( buf_krutilka[ i ][0] );
+
+    DBGserial.print("\t["); DBGserial.print(i);DBGserial.print("][1] ");
+    DBGserial.print( buf_krutilka[ i ][1] );
+    DBGserial.println();
+  }  
+}
+
+
+uint32_t test_time = 5000;
+
 void main_loop(){  
 
 #ifdef DEBUG_USART
@@ -96,6 +111,21 @@ void main_loop(){
 
   MIDI_Master.read();
   MIDI_Slave.read();
+
+  if (test_time) {
+    if (millis() > test_time) {
+      test_time = 0;
+      DBGserial.println("[i] [mx] [ch]");
+      for (byte i=0; i<KRUTILKI_CNT; i++ ) {
+        DBGserial.print("["); DBGserial.print(i);DBGserial.print("] ");
+        DBGserial.print("["); DBGserial.print(krutilka[ i ].mx);DBGserial.print("] ");
+        DBGserial.print("["); DBGserial.print(krutilka[ i ].ch);DBGserial.print("] ");
+        DBGserial.print( krutilka[ i ].value );
+        DBGserial.println();
+      }
+      show_buf_krutilka();
+    }
+  }
   
 }
 
@@ -109,11 +139,9 @@ void set_autotreshold(){
     kanal[i].adc_max = 0;
   }
   DBGserial.println();
-  DBGserial.println("ADC2 > ");
-  for (byte i=0; i<NUM_MULTIPLEXORS; i++ ) {
-    DBGserial.print( buf_krutilka[ i ][0] );  DBGserial.print("\t"); DBGserial.println( buf_krutilka[ i ][1] );
-  }
-  DBGserial.println();
+
+  show_buf_krutilka();
+
   scan_autotreshold = false;
 }
 

@@ -9,7 +9,8 @@
 #define CC_VOLUME 7
 
 // собственные команды
-#define CC_NOTE_LENGTH 9
+#define CC_NOTE_LENGTH0 3
+#define CC_NOTE_LENGTH1 9
 #define CC_VOICE_PEDAL 69 // 0-63-127
 #define CC_SHIFT_OCTAVE 70 // ==64 - не сдвигать
 #define CC_VELOCITY1 71 // 
@@ -29,16 +30,21 @@ MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, DBGserial, MIDI_Slave, MySettings);
 void doControlChangeMaster(byte channel, byte number, byte value) {   
     switch (number) {
       case CC_FOOT_PEDAL:  cfg.pedal = value; 
+                      changePedalSustain();
                       break;
-      case CC_NOTE_LENGTH: cfg.noteoff_time = value;
+      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value;
                       break;
-      default:                    
-            DBGserial.print(" Master CC channel ");
-            DBGserial.print(channel, HEX);
-            DBGserial.print(" number ");
-            DBGserial.print(number, HEX);
-            DBGserial.print(" value ");
-            DBGserial.println(value, HEX);
+      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value;
+                      break;
+      case CC_VOICE_PEDAL: cfg.pedal_voice = value;
+                      break;                      
+      case CC_SHIFT_OCTAVE: cfg.pedal_octave = value;
+                      break;                      
+      case CC_VELOCITY1: cfg.velocity1 = value;
+                      break;
+      case CC_VELOCITY127: cfg.velocity127 = value;
+                      break;
+      default: break;
     }
 }
 
@@ -46,20 +52,23 @@ void doControlChangeSlave(byte channel, byte number, byte value) {
     // обработаем если есть что-то интересное для нас от рабов
     switch (number) {
       case CC_FOOT_PEDAL:  cfg.pedal = value; 
+                      changePedalSustain();
                       break;
-      case CC_NOTE_LENGTH: cfg.noteoff_time = value;
+      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value;
                       break;
-      default:                    
-            DBGserial.print(" Slave CC channel ");
-            DBGserial.print(channel, HEX);
-            DBGserial.print(" number ");
-            DBGserial.print(number, HEX);
-            DBGserial.print(" value ");
-            DBGserial.println(value, HEX);
+      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value;
+                      break;
+      case CC_VOICE_PEDAL: cfg.pedal_voice = value;
+                      break;                      
+      case CC_SHIFT_OCTAVE: cfg.pedal_octave = value;
+                      break;                      
+      case CC_VELOCITY1: cfg.velocity1 = value;
+                      break;
+      case CC_VELOCITY127: cfg.velocity127 = value;
+                      break;
+      default: break;
     }
 }
-
-
 
 void doNoteOnMaster(byte channel, byte note, byte velocity) {
 }
@@ -80,7 +89,7 @@ void midiSetup(){
   MIDI_Master.setHandleSystemExclusive(sysexHanlerMaster);
 
   MIDI_Slave.begin(MIDI_CHANNEL_OMNI); // слушаем команды для всех каналов
-  //MIDI_Slave.turnThruOff(); // отключить повтор входных данных
+  MIDI_Slave.turnThruOff(); // отключить повтор входных данных
   MIDI_Slave.setHandleControlChange(doControlChangeSlave);
   //MIDI_Slave.setHandleNoteOn(doNoteOnSlave);
   //MIDI_Slave.setHandleNoteOff(doNoteOffSlave);
@@ -92,13 +101,54 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   
   byte ch = notes[idx].kanal;
   uint16_t level = notes[idx].level;
+  uint8_t voice;
+  uint32_t time_to_off; // когда посылать note_off
+/*
+Команды на удар по клавише.
+Простая нота без педали. Отсылаем голос1, note_on, и через time_0 note_off.
+Простая нота с полупедалью. Отсылаем голос2, note_on и через time_1 note_off.
+Простая нота с педалью. Отсылаем голос2, note_on. Выключение ноты после отпускания педали.
+Нота с касанием без педали. Отсылаем голос3, note_on и через time_0 note_off.
+Нота с касание с полупедалью. Отсылаем голос4, note_on и через time_1 note_off.
+Нота с касание с педалью. Отсылаем голос4, note_on. Выключение ноты после отпускания педали.
+*/
+  // определить каким голосом играть ноту в зависимости от датчика касания и педали сустейна, а также сдвига голосов
+  if ( !kanal[ch].pressed ) { // без касания
+      if ( cfg.pedal < 42 ) { voice = 1; time_to_off = cfg.noteoff_time0; }
+      else { 
+        voice = 2; 
+        if ( cfg.pedal < 85 ) time_to_off = cfg.noteoff_time1;
+        else time_to_off = 1800000; // 30 минут
+      }
+  } else { // сработал датчик касания
+      if ( cfg.pedal < 42 ) { voice = 3; time_to_off = cfg.noteoff_time0; }
+      else { 
+        voice = 4; 
+        if ( cfg.pedal < 85 ) time_to_off = cfg.noteoff_time1;
+        else time_to_off = 1800000; // 30 минут
+      }    
+  }
+
+  voice += cfg.pedal_voice; // добавляем сдвиг голосов по педалям
+
+  if ( voice != cfg.voice ) {
+    cfg.voice = voice; // запомним текущий голос для уменьшения трафика
+    MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
+  }
+
+  int16_t vel1 = kanal[ch].velocity1+cfg.velocity1;
+  int16_t vel127 = kanal[ch].velocity127-cfg.velocity127;
   
-  int16_t velocity = map( level , kanal[ch].velocity1, kanal[ch].velocity127, 1, 127);
+  int16_t velocity = map( level , vel1, vel127, 1, 127);
   if (velocity > 126) velocity=127;
   if (velocity < 1) velocity=0;
 
-  MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
-  kanal[ch].noteoff_time = millis() + cfg.noteoff_time;
+  if (velocity == 0) { // прижали палочку - глушим ранее играющую ноту
+    MIDI_Master.sendNoteOff( kanal[ch].note , 127, DRUMS);      
+  } else {
+    MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
+    kanal[ch].noteoff_time = millis() + time_to_off;
+  }
 
   //LED_ON;
   if ( (TEST_KANAL_RED != ch) & (TEST_KANAL_GREEN != ch) ) { // вывод отчета по кроссталку
@@ -146,4 +196,9 @@ void note_off(byte ch) {
   }
 }
 
+void send_SysEx(byte size, byte *arr) { // выслать системное сообщение 
+  MIDI_Master.sendSysEx(sizeof(arr), arr, false);
+}
+
+  
 

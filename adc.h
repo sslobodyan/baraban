@@ -64,7 +64,7 @@ static bool bit_c;
 void  next_multiplexor(){ // выбрать следующий мультиплексор
   last_milti_idx = multi_idx; // запоминаем какой мультиплексор просканировали
 
-  if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
+  //if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
   
   if (++multi_idx >= NUM_MULTIPLEXORS) {
     multi_idx = 0; // новый проход по всем мультиплексорам

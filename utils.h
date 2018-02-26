@@ -73,4 +73,15 @@ void show_buf(){ // чисто отладка
   }
 }
 
+void changePedalSustain() {
+  if (cfg.pedal == 0) {
+    // заглушить все ноты при отпускании педали
+    for (byte i=0; i<NUM_CHANNELS; i++) { // проверка на время note_off
+      if ( kanal[i].noteoff_time ) {
+          note_off(i);
+          kanal[i].noteoff_time = 0;
+      }
+    }
+  }
+}
 

@@ -18,7 +18,7 @@
 0x05 Состояние вывода информации сработавшей крутилки
       0x05
       номер_входа (127-все)
-       состояние (0-молчать,1-вывод текущего уровня)
+      состояние (0-молчать,1-вывод текущего уровня)
 0x06 Задать уровень порога для пьезо-входа (treshold)
       0x06
       номер_входа (127-все)
@@ -26,7 +26,7 @@
       уровень трешолда младших 7 бит
 0x07 Текущий уровень с пьезо-входа 
       0x07
-        номер_модуля 
+      номер_модуля 
       номер_входа 
       уровень старших 7 бит
       уровень младших 7 бит
@@ -49,20 +49,36 @@ data bytes
 
 #define SYSEX_ID 0x7D
 
-void set_type_krutilka(byte * array, unsigned array_size) {
-/*
-0x01 Назначить тип крутилки на аналоговый вход
-      0x01 - [3]
-      номер_входа (127-все) [4]
-      тип_крутилки(0,PEDAL_SUSTAIN,PEDAL_VOICE...) [5]
-*/
+void set_type_krutilka(byte * array, unsigned array_size) { // 0x01 Назначить тип крутилки на аналоговый вход
   if (array[4] == 127) {
     for (byte i=0; i<KRUTILKI_CNT; i++) {
       krutilka_set_type(i, array[5]);
     }
   } else {
-    krutilka_set_type(array[4], array[5]);
+    if ( array[4] < KRUTILKI_CNT ) krutilka_set_type(array[4], array[5]);
   }
+}
+
+void set_show_krutilka(byte * array, unsigned array_size) { // 0x05 Состояние вывода информации сработавшей крутилки
+  if (array[4] == 127) {
+    for (byte i=0; i<KRUTILKI_CNT; i++) {
+      krutilka[i].show = array[5];
+    }
+  } else {
+    if ( array[4] < KRUTILKI_CNT ) krutilka[ array[4] ].show = array[5];
+  }
+}
+
+void send_sysex_krutilka(uint8_t idx) { // выслать состояние крутилки-педали
+/*
+0x08 Текущий уровень с крутилки-педали
+      0x08
+      номер_модуля
+      номер_входа
+      уровень крутилки
+*/  
+  byte arr[]={SYSEX_ID, cfg.module, idx, krutilka[idx].value};
+  send_SysEx(sizeof(arr), arr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -72,6 +88,7 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
   if ( (array[2] != cfg.module) && (array[2] != 127) ) return;
   switch ( array[3] ) {
     case 0x01: set_type_krutilka(array,array_size); break;
+    case 0x05: set_show_krutilka(array,array_size); break; // Состояние вывода информации сработавшей крутилки
     default : break;
   }
 }
