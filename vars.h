@@ -11,6 +11,9 @@
 
 #define DRUMS 10 // номер MIDI-канала в который передаем
 
+#define SELECT_MODULE1 PB5 // пайка
+#define SELECT_MODULE2 PA8 // тумблер
+
 #define LED PC13
 #define LED_ON digitalWrite(LED, LOW)
 #define LED_OFF digitalWrite(LED, HIGH)
@@ -29,7 +32,12 @@
 #define TEST_KANAL_GREEN 10
 #define TEST_KANAL_RED 0
 
-#define GND_SENSOR 16
+#define MODULE_72 72
+#define MODULE_60 60
+#define MODULE_48 48
+#define MODULE_36 36
+
+#define GND_SENSOR 15
 uint8_t ADC_1Sequence[4]={GND_SENSOR,7,GND_SENSOR,8};   
 uint8_t ADC_2Sequence[6]={GND_SENSOR,4,GND_SENSOR,5,GND_SENSOR,6};   
 uint8_t ADC_3Sequence[6]={GND_SENSOR,1,GND_SENSOR,2,GND_SENSOR,3};   // входы с 1 - см схему, 0-контрольный, 9-земля
@@ -61,6 +69,7 @@ struct stChannel {
   // настройка
   uint32_t treshold; // порог уровня удара
   byte note; // номер ноты
+  byte real_note; // номер реально сыграной ноты с учетом сдвига октавы
   uint32_t velocity1; // уровень для громкости == 1
   uint32_t velocity127; // уровень для громкости == 127
   // рассчетные
@@ -69,7 +78,8 @@ struct stChannel {
   uint32_t mute_time; // ms время начала запрета сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off ms
   uint32_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
-  
+  // датчики касания
+  bool pressed; // нажат
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
@@ -77,9 +87,19 @@ struct stConfig {
   uint32_t mute_time = 60; // ms запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
   uint32_t autotreshold_above = 50; // порог выше уровня шумов
   uint32_t noteoff_time = 500; // ms звучания ноты
-  uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов
+  uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов 
   uint32_t autotreshold_time = 1000; // ms настройки порогов после старта
-  uint8_t pedal = 0; // состояние педали 0 - 63 - 127
+  uint8_t pedal = 0; // состояние педали sustain 0 - 63 - 127
+  uint8_t pedal_voice = 0; // состояние педали для добавления к номеру голоса
+  uint8_t delta_voice = 4; // шаг добавления номера голоса педалью
+  uint8_t module = MODULE_72; // номер модуля (меняется при включении)
+  uint8_t start_note = MODULE_72; // номер ноты нулевого входа
+  uint8_t end_note = MODULE_72+32; // номер ноты последнего входа
+  uint8_t pedal_octave = 12; // состояние педали сдвига октавы (12==без сдвига)
+  uint8_t pedal_program = 0; // состояние педали номера программы
+  uint16_t velocity1 = 0;
+  uint16_t velocity127 = 0;
+  uint8_t volume=100;
 } cfg;
 
 #define NOTES_CNT 30 // длина буфера нажатых нот 
@@ -109,6 +129,13 @@ volatile uint16_t buf_krutilka[ KRUTILKI_CNT ][2]; // буфер всех ска
 
 void (*handl)(uint8_t tp); // глобальная переменная с адресом обработчика крутилки
 
+struct stTouchModule {
+  uint8_t kanal[8];
+  uint16_t touched;  
+} touch[4]; // 4 модуля касания по 8 входов - к какому аналогову входу привязан
+
+uint32_t tm_time;
+
 
 /////////////////////////  Объявления функций //////////////////////////////////////
 
@@ -117,3 +144,4 @@ void store_autotreshold();
 void update_krutilki();
 void setup_krutilki();
 void set_handl(uint8_t tp);
+void krutilka_set_type(uint8_t idx, uint8_t tp);

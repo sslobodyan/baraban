@@ -6,7 +6,7 @@ void store_maximum() {
   uint32_t idx=1;
   for( uint32_t i=0; i<NUM_CHANNELS; i++) {
 
-    if (idx>31) buf_adc[last_buf_idx][idx]=0; // ToDo Debug пока нет всех плат
+    if (kanal[i].note == 0) continue; // если нота не назначена, то обработку канала пропускаем
     
     if ( kanal[i].mute_time == 0 ) { // разрешено сканирование канала
       if ( kanal[i].scan_time == 0 ) { // еще не начинали сканировать - порог пока не превышен

@@ -8,6 +8,12 @@
 #define NHD_F 0x30
 #define NCL_F 0x31
 #define FDL_F 0x32
+
+#define NHDT 0x33
+#define NCLT 0x34
+#define FDLT 0x35
+
+
 #define ELE0_T  0x41
 #define ELE0_R  0x42
 #define ELE1_T  0x43
@@ -32,8 +38,17 @@
 #define ELE10_R 0x56
 #define ELE11_T 0x57
 #define ELE11_R 0x58
+
+#define DEBOUNCE  0x5B
+#define AFE1  0x5C
+#define AFE2  0x5D
+
+
 #define FIL_CFG 0x5D
 #define ELE_CFG 0x5E
+
+#define ECR  0x5E
+
 #define GPIO_CTRL0  0x73
 #define GPIO_CTRL1  0x74
 #define GPIO_DATA 0x75
@@ -47,14 +62,16 @@
 #define ATO_CFGL  0x7E
 #define ATO_CFGT  0x7F
 
-// Global Constants
-#define TOU_THRESH  0x06
-#define REL_THRESH  0x0A
+#define SOFTRESET  0x80
 
-int irqpin1 = PB7;  
-int irqpin2 = PB7;  
+// Global Constants
+#define TOU_THRESH  6
+#define REL_THRESH  12
+
+int irqpin1 = PC14;  
+int irqpin2 = PC15;  
 int irqpin3 = PB7;  
-int irqpin4 = PB7;  
+int irqpin4 = PB6;  
 
 byte mpr_addr[4] = {0x5A,0x5B,0x5C,0x5D};
 
@@ -62,7 +79,7 @@ byte mpr121_setup_registers(byte addr);
 boolean checkInterrupt(byte idx);
 void set_register(int address, unsigned char r, unsigned char v);
 
-byte setup_touch(){
+byte setup_mpr(){
   pinMode(irqpin1, INPUT_PULLUP);
   pinMode(irqpin2, INPUT_PULLUP);
   pinMode(irqpin3, INPUT_PULLUP);
@@ -80,22 +97,40 @@ byte setup_touch(){
   return res;
 }
 
+uint8_t get_register(uint8_t module, uint8_t reg) {
+  Wire.beginTransmission(mpr_addr[module]);
+  Wire.write(reg);
+  if ( Wire.endTransmission(false) == 0) {
+      Wire.requestFrom(mpr_addr[module],1); 
+      return Wire.read();
+  }
+  return 255;
+}
+
+void show_regs(uint8_t module) {
+  uint8_t res;
+  Serial1.println();
+  for (uint8_t i=0; i<0x80; i++) {
+    res = get_register(module, i);
+    Serial1.print("$"); Serial1.print(i, HEX); 
+    Serial1.print(": 0x"); Serial1.print(res,HEX);
+    Serial1.print("\t"); Serial1.print(res);
+    Serial1.print("\t 0b"); Serial1.println(res,BIN);
+  }
+}
+
 void readTouchInputs(){
-  for (byte i=0; i<sizeof(mpr_addr); i++) {
-    if ( checkInterrupt(i) ) {  
-        Wire.beginTransmission(mpr_addr[i]);
+  for (byte module=0; module<sizeof(mpr_addr); module++) {
+    if ( checkInterrupt(module) ) {  
+        Wire.beginTransmission(mpr_addr[module]);
         if ( Wire.endTransmission(false) == 0) {
-            Wire.requestFrom(mpr_addr[i],2); 
+            Wire.requestFrom(mpr_addr[module],2); 
             byte LSB = Wire.read();
             byte MSB = Wire.read();
-            
-            uint16_t touched = ((MSB << 8) | LSB); //16bits that make up the touch states
-        
-            for (int i=0; i < 12; i++){  // Check what electrodes were pressed
-              if(touched & (1<<i)){
-              //ToDo проставить флаг в нужном канале    
-              }
-            }             
+            touch[module].touched = ((MSB << 8) | LSB); //запомним состояние входов
+            for (int n=0; n < 8; n++){  // проставить признак нажатия
+              kanal[ touch[module].kanal[n] ].pressed = touch[module].touched & (1<<n);
+            }
         } else {
           // ToDo модуль не ответил
         }
@@ -110,83 +145,63 @@ byte mpr121_setup_registers(byte addr){
   if ( Wire.endTransmission(false) != 0) return 0;
 
   set_register(addr, ELE_CFG, 0x00); 
-  
-  // Section A - Controls filtering when data is > baseline.
-  set_register(addr, MHD_R, 0x01);
-  set_register(addr, NHD_R, 0x01);
-  set_register(addr, NCL_R, 0x00);
-  set_register(addr, FDL_R, 0x00);
 
-  // Section B - Controls filtering when data is < baseline.
-  set_register(addr, MHD_F, 0x01);
-  set_register(addr, NHD_F, 0x01);
-  set_register(addr, NCL_F, 0xFF);
-  set_register(addr, FDL_F, 0x02);
+///////////////////////////////////
+
+  set_register(addr, SOFTRESET, 0x63);
+  delay(2);
+
+  for (uint8_t i=0; i<12; i++) {
+    set_register(addr, ELE0_T + 2*i, 15);
+    set_register(addr, ELE0_R + 2*i, 10);
+  }
+
+  set_register(addr,0x2B, 0x01);
+  set_register(addr,0x2C, 0x01);
+  set_register(addr,0x2D, 0x0E);
+  set_register(addr,0x2E, 0x00);
+
+  set_register(addr,0x2F, 0x01);
+  set_register(addr,0x30, 0x05);
+  set_register(addr,0x31, 0x01);
+  set_register(addr,0x32, 0x00);
+
+
+
+  set_register(addr,0x33, 0x00);
+  set_register(addr,0x34, 0x00);
+  set_register(addr,0x35, 0x00);
+
+  set_register(addr,0x5B, 0);//DEBOUNCE
+  set_register(addr,0x5C, 0x10); //AFE1 default, 16uA charge current
+  set_register(addr,0x5D, 0x20); // AFE2 0.5uS encoding, 1ms period
+
+  set_register(addr,0x5C, 0b1100000+1); // CDC 1ma
+  set_register(addr,0x5D, 0b00100000); // CDT=0.5us SFI=4 ESI=1ms
+  set_register(addr,0x7D, 201); 
+  set_register(addr,0x7F, 181); 
+  set_register(addr,0x7E, 131); 
+  set_register(addr,0x7B, 0b1011); 
+
+  //delay(1500);
+  //show_regs(0);
+
+  set_register(addr,0x5E, 1);  // start with first 5 bits of baseline tracking
+  //show_regs(0);
   
-  // Section C - Sets touch and release thresholds for each electrode
-  set_register(addr, ELE0_T, TOU_THRESH);
-  set_register(addr, ELE0_R, REL_THRESH);
- 
-  set_register(addr, ELE1_T, TOU_THRESH);
-  set_register(addr, ELE1_R, REL_THRESH);
+  for (byte i=40; i<45; i++) get_register(0, i);
   
-  set_register(addr, ELE2_T, TOU_THRESH);
-  set_register(addr, ELE2_R, REL_THRESH);
-  
-  set_register(addr, ELE3_T, TOU_THRESH);
-  set_register(addr, ELE3_R, REL_THRESH);
-  
-  set_register(addr, ELE4_T, TOU_THRESH);
-  set_register(addr, ELE4_R, REL_THRESH);
-  
-  set_register(addr, ELE5_T, TOU_THRESH);
-  set_register(addr, ELE5_R, REL_THRESH);
-  
-  set_register(addr, ELE6_T, TOU_THRESH);
-  set_register(addr, ELE6_R, REL_THRESH);
-  
-  set_register(addr, ELE7_T, TOU_THRESH);
-  set_register(addr, ELE7_R, REL_THRESH);
-  
-  set_register(addr, ELE8_T, TOU_THRESH);
-  set_register(addr, ELE8_R, REL_THRESH);
-  
-  set_register(addr, ELE9_T, TOU_THRESH);
-  set_register(addr, ELE9_R, REL_THRESH);
-  
-  set_register(addr, ELE10_T, TOU_THRESH);
-  set_register(addr, ELE10_R, REL_THRESH);
-  
-  set_register(addr, ELE11_T, TOU_THRESH);
-  set_register(addr, ELE11_R, REL_THRESH);
-  
-  // Section D
-  // Set the Filter Configuration
-  // Set ESI2
-  set_register(addr, FIL_CFG, 0x04);
-  
-  // Section E
-  // Electrode Configuration
-  // Set ELE_CFG to 0x00 to return to standby mode
-  set_register(addr, ELE_CFG, 0x00);  
-  
-  // Section F
-  // Enable Auto Config and auto Reconfig
-  /*set_register(0x5A, ATO_CFG0, 0x0B);
-  set_register(0x5A, ATO_CFGU, 0xC9);  // USL = (Vdd-0.7)/vdd*256 = 0xC9 @3.3V   set_register(0x5A, ATO_CFGL, 0x82);  // LSL = 0.65*USL = 0x82 @3.3V
-  set_register(0x5A, ATO_CFGT, 0xB5);*/  // Target = 0.9*USL = 0xB5 @3.3V
-  
-  set_register(addr, ELE_CFG, 0x0C); // Set to RUN mode with all 12 electrodes
-  
+  set_register(addr,0x5E, 1);  // start with first 5 bits of baseline tracking
+
   return 1;
 }
 
 boolean checkInterrupt(byte idx){
   switch (idx) {
-    case 0: return digitalRead(irqpin1);
-    case 1: return digitalRead(irqpin2);
-    case 2: return digitalRead(irqpin3);
-    case 3: return digitalRead(irqpin4);
+    case 0: return !digitalRead(irqpin1);
+    case 1: return !digitalRead(irqpin2);
+    case 2: return !digitalRead(irqpin3);
+    case 3: return !digitalRead(irqpin4);
     default: ;
   }
 }

@@ -18,7 +18,7 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     }
 
   }
-      
+/*      
     DBGserial.print("kr ");
     DBGserial.print( krutilka_idx );
     //DBGserial.print("=");
@@ -27,7 +27,7 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     DBGserial.print( tmp );
     DBGserial.print("\t");
     if (krutilka_idx == KRUTILKI_CNT-1 ) DBGserial.println();
-      
+*/      
   if ( ++krutilka_idx >= KRUTILKI_CNT ) krutilka_idx = 0;
 }
 
@@ -43,8 +43,7 @@ void setPotLength( uint8_t value ) { // обработчик 0 крутилки 
   cfg.noteoff_time = value * 100;
   if ( old != cfg.noteoff_time ) {
     MIDI_Master.sendControlChange( CC_NOTE_LENGTH, cfg.noteoff_time, DRUMS );
-    MIDI_Slave.sendControlChange( CC_NOTE_LENGTH, cfg.noteoff_time, DRUMS );   
-    DBGserial.print("Length=");DBGserial.println( cfg.noteoff_time ); 
+    DBGserial.print("Length=");DBGserial.println( cfg.noteoff_time ); // ToDo Debug
   }
 }
 
@@ -58,37 +57,75 @@ void setPedalSustain( uint8_t value ) { // обработчик 1 крутилк
   if ( old !=  cfg.pedal ) {
     // отсылаем все сообщение о педали
     MIDI_Master.sendControlChange( CC_FOOT_PEDAL, cfg.pedal, DRUMS );
-    MIDI_Slave.sendControlChange( CC_FOOT_PEDAL, cfg.pedal, DRUMS );
-    DBGserial.print("Pedal=");DBGserial.println( cfg.pedal );      
+    DBGserial.print("Pedal=");DBGserial.println( cfg.pedal ); // ToDo Deb
   }
 }
 
 void setPedalVoice( uint8_t value ) {
-  
+  byte old = cfg.pedal_voice;
+  if (value < 42) cfg.pedal_voice = cfg.delta_voice;
+  else if (value > 85) cfg.pedal_voice = cfg.delta_voice * 2;
+  else cfg.pedal_voice = 0;
+  if ( old != cfg.pedal_voice ) {
+    MIDI_Master.sendControlChange( CC_VOICE_PEDAL, cfg.pedal_voice, DRUMS );
+    DBGserial.print("Voice=");DBGserial.println( cfg.pedal_voice ); // ToDo Debug
+  }  
 }
 
 void setPedalOctave( uint8_t value ) {
-  
+  // ToDo только отсылается сэмплеру, у нас ноты не сдвигаются
+  byte old = cfg.pedal_octave;
+  if (value < 42) cfg.pedal_octave = 0;
+  else if (value > 85) cfg.pedal_octave = 24;
+  else cfg.pedal_octave = 12;
+  if ( old != cfg.pedal_octave ) {
+    MIDI_Master.sendControlChange( CC_SHIFT_OCTAVE, cfg.pedal_octave, DRUMS );
+    DBGserial.print("Octave=");DBGserial.println( cfg.pedal_octave ); // ToDo Debug
+  }  
 }
 
 void setPedalProgram( uint8_t value ) {
-  
+  byte old = cfg.pedal_program;
+  if (value < 42) if (cfg.pedal_program > 0) cfg.pedal_program -= 1;
+  else if (value > 85) cfg.pedal_program += 1;
+  if ( old != cfg.pedal_program ) {
+    MIDI_Master.sendProgramChange(cfg.pedal_program, DRUMS );
+    DBGserial.print("Program=");DBGserial.println( cfg.pedal_program ); // ToDo Debug
+  }    
 }
 
 void setPedalPanic( uint8_t value ) {
-  
+  if (value < 42) {
+    MIDI_Master.sendControlChange( CC_PANIC, cfg.pedal_program, DRUMS );
+    DBGserial.println("Panic!"); // ToDo Debug
+  }   
 }
 
 void setPotVelocity1( uint8_t value ) {
-  
+  uint16_t old = cfg.velocity1;
+  cfg.velocity1 = (uint16_t) value * 8;
+  if ( old != cfg.velocity1 ) {
+    MIDI_Master.sendControlChange( CC_VELOCITY1, cfg.velocity1, DRUMS );
+    DBGserial.print("Velocity1=");DBGserial.println( cfg.velocity1 ); // ToDo Debug
+  }  
 }
 
 void setPotVelocity127( uint8_t value ) {
-  
+  uint16_t old = cfg.velocity127;
+  cfg.velocity127 = (uint16_t) value * 8;
+  if ( old != cfg.velocity127 ) {
+    MIDI_Master.sendControlChange( CC_VELOCITY127, cfg.velocity127, DRUMS );
+    DBGserial.print("Velocity127=");DBGserial.println( cfg.velocity127 ); // ToDo Debug
+  }  
 }
 
 void setPotVolume( uint8_t value ) {
-  
+  byte old = cfg.volume;
+  cfg.volume = value;
+  if ( old != cfg.volume ) {
+    MIDI_Master.sendControlChange( CC_VOLUME, cfg.volume, DRUMS );
+    DBGserial.print("Volume=");DBGserial.println( cfg.volume ); // ToDo Debug
+  } 
 }
 
 void set_handl(uint8_t tp) { // назначаем глобальной переменной обработчик крутилки
@@ -106,9 +143,9 @@ void set_handl(uint8_t tp) { // назначаем глобальной пере
   }
 }
 
-void set_type(uint8_t idx, uint8_t tp) { // назначаем крутилке обработчик
+void krutilka_set_type(uint8_t idx, uint8_t tp) { // назначаем крутилке обработчик
   set_handl(tp);
-  krutilka[ idx ].onChange = handl;
+  if ( idx < KRUTILKI_CNT ) krutilka[ idx ].onChange = handl;
 }
 
 //////////////////////////////////////////////////////////////////////////

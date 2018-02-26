@@ -13,7 +13,7 @@
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
   
-  DBGserial.begin(230400);
+  DBGserial.begin(115200);
   DBGserial.print("Started... ");
     
   setup_ADC();
@@ -26,22 +26,53 @@ void setup() {
   pinMode(RED_LED, OUTPUT);
   RED_OFF;
 
-  pinMode(PC15, OUTPUT);
-  digitalWrite(PC15, HIGH);
+  setup_module();
   
   stop_scan = false;
   setup_kanal();
   setup_krutilki();
   midiSetup();
   DBGserial.print(" Search MPRs... ");
-  DBGserial.print( setup_touch() );
+  DBGserial.print( setup_mpr() );
   DBGserial.println();
+  setup_touch(); // распределение датчиков касания по каналах
+}
+
+void setup_module() { // по перемычкам определить тип модуля и соотв. назначить номера нот  
+  pinMode(SELECT_MODULE1, INPUT_PULLUP);
+  pinMode(SELECT_MODULE2, INPUT_PULLUP);
+  if ( digitalRead(SELECT_MODULE1) ) {
+    if ( digitalRead(SELECT_MODULE2) ) {
+      cfg.module = MODULE_72;
+    } else {
+      cfg.module = MODULE_60;
+    }
+  } else {
+    if ( digitalRead(SELECT_MODULE2) ) {
+      cfg.module = MODULE_48;
+    } else {
+      cfg.module = MODULE_36;
+    }    
+  }
 }
 
 void main_loop(){  
 
+#ifdef DEBUG_USART
+  if ( millis() > tm_time ) {
+    #define INST 38
+    #define TEST_CH 20
+    kanal[TEST_CH].note = INST;
+    tm_time =  200 + random(200) + millis();
+    MIDI_Master.sendNoteOn( kanal[TEST_CH].note , 120, DRUMS);      
+    kanal[TEST_CH].noteoff_time = millis() + 200;
+  }
+#endif
+
   update_krutilki(); // положение текущей педали-крутилки на центральном модуле
+  
   // датчики касания
+  // readTouchInputs();
 
   while (head_notes != tail_notes) { // играть ноты из буфера нажатых нот
     if (++tail_notes >= NOTES_CNT) tail_notes=0;
@@ -57,10 +88,14 @@ void main_loop(){
     }
   }
 
+//  if (MIDIserial.available()) {
+//    MIDIserial.print("In buffer 0x");
+//    MIDIserial.print( MIDIserial.peek(), HEX );
+//    MIDIserial.println(" byte");
+//  }
+
   MIDI_Master.read();
   MIDI_Slave.read();
-
-  if ( millis() > 5000 ) digitalWrite(PC15, LOW); // debug
   
 }
 

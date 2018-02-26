@@ -22,12 +22,28 @@ void print_adc_buffer(byte from, byte to) {
   DBGserial.println();
 }
 
-void setup_kanal() {
+void fill_notes() { // присвоить используемым входам номера нот
   for (byte i=0; i<NUM_CHANNELS; i++) {
-    kanal[i].note = i+35;
+    if (i+cfg.start_note <= cfg.end_note) {
+      kanal[i].note = i+cfg.start_note;  
+    } else kanal[i].note = 0; // канал не используется
+  }  
+}
+
+void setup_kanal() {
+  fill_notes();
+  for (byte i=0; i<NUM_CHANNELS; i++) {
     kanal[i].treshold = 0xFFFF;
     kanal[i].velocity1 = 300;
     kanal[i].velocity127 = 1300;
+  }
+}
+
+void setup_touch() {
+  for (byte mdl=0; mdl<4; mdl++) {
+    for (byte n=0; n<8; n++) {
+      touch[mdl].kanal[n] = n;
+    }
   }
 }
 
@@ -35,6 +51,7 @@ void add_note(byte ch, uint16_t level) { // из прерывания
   if (++head_notes >= NOTES_CNT) head_notes = 0;
   notes[head_notes].kanal = ch;
   notes[head_notes].level = level;
+  tm_time = micros(); // время удара для отладки
 }
 
 void show_buf(){ // чисто отладка
