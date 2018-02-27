@@ -5,7 +5,7 @@
 // прописано в сэмплербоксе - не меняем
 #define CC_FOOT_PEDAL 64 // 0-63-127
 #define CC_VOICE 80
-#define CC_PANIC 123
+#define CC_PANIC 120
 #define CC_VOLUME 7
 
 // собственные команды
@@ -32,17 +32,15 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
       case CC_FOOT_PEDAL:  cfg.pedal = value; 
                       changePedalSustain();
                       break;
-      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value;
+      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value * 100;
                       break;
-      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value;
+      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value * 100;
                       break;
       case CC_VOICE_PEDAL: cfg.pedal_voice = value;
                       break;                      
-      case CC_SHIFT_OCTAVE: cfg.pedal_octave = value;
-                      break;                      
-      case CC_VELOCITY1: cfg.velocity1 = value;
+      case CC_VELOCITY1: cfg.velocity1 = value * 8;
                       break;
-      case CC_VELOCITY127: cfg.velocity127 = value;
+      case CC_VELOCITY127: cfg.velocity127 = value * 8;
                       break;
       default: break;
     }
@@ -54,17 +52,15 @@ void doControlChangeSlave(byte channel, byte number, byte value) {
       case CC_FOOT_PEDAL:  cfg.pedal = value; 
                       changePedalSustain();
                       break;
-      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value;
+      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value * 100;
                       break;
-      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value;
+      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value * 100;
                       break;
       case CC_VOICE_PEDAL: cfg.pedal_voice = value;
                       break;                      
-      case CC_SHIFT_OCTAVE: cfg.pedal_octave = value;
-                      break;                      
-      case CC_VELOCITY1: cfg.velocity1 = value;
+      case CC_VELOCITY1: cfg.velocity1 = value * 8;
                       break;
-      case CC_VELOCITY127: cfg.velocity127 = value;
+      case CC_VELOCITY127: cfg.velocity127 = value * 8;
                       break;
       default: break;
     }
@@ -97,36 +93,27 @@ void midiSetup(){
 }
 
 void note_on(byte idx) { // играть ноту по индексу из буфера нот
-  //show_buf();
   
   byte ch = notes[idx].kanal;
   uint16_t level = notes[idx].level;
   uint8_t voice;
   uint32_t time_to_off; // когда посылать note_off
-/*
-Команды на удар по клавише.
-Простая нота без педали. Отсылаем голос1, note_on, и через time_0 note_off.
-Простая нота с полупедалью. Отсылаем голос2, note_on и через time_1 note_off.
-Простая нота с педалью. Отсылаем голос2, note_on. Выключение ноты после отпускания педали.
-Нота с касанием без педали. Отсылаем голос3, note_on и через time_0 note_off.
-Нота с касание с полупедалью. Отсылаем голос4, note_on и через time_1 note_off.
-Нота с касание с педалью. Отсылаем голос4, note_on. Выключение ноты после отпускания педали.
-*/
+
   // определить каким голосом играть ноту в зависимости от датчика касания и педали сустейна, а также сдвига голосов
-  if ( !kanal[ch].pressed ) { // без касания
-      if ( cfg.pedal < 42 ) { voice = 1; time_to_off = cfg.noteoff_time0; }
-      else { 
-        voice = 2; 
-        if ( cfg.pedal < 85 ) time_to_off = cfg.noteoff_time1;
-        else time_to_off = 1800000; // 30 минут
-      }
-  } else { // сработал датчик касания
-      if ( cfg.pedal < 42 ) { voice = 3; time_to_off = cfg.noteoff_time0; }
-      else { 
-        voice = 4; 
-        if ( cfg.pedal < 85 ) time_to_off = cfg.noteoff_time1;
-        else time_to_off = 1800000; // 30 минут
-      }    
+  if ( cfg.pedal > 42 ) { // педаль или полупедаль
+    voice = 1; 
+    if ( cfg.pedal < 85 ) { // полупедаль
+      time_to_off = cfg.noteoff_time1;   
+    } else {
+      time_to_off = 1800000; // 30 минут для педали
+    }
+  } else { // без педали
+    voice = 2; 
+    time_to_off = cfg.noteoff_time0;
+  }
+
+  if ( kanal[ch].pressed ) { // было касаниe - голоса 3 и 4
+    voice += 2;
   }
 
   voice += cfg.pedal_voice; // добавляем сдвиг голосов по педалям
@@ -144,7 +131,7 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   if (velocity < 1) velocity=0;
 
   if (velocity == 0) { // прижали палочку - глушим ранее играющую ноту
-    MIDI_Master.sendNoteOff( kanal[ch].note , 127, DRUMS);      
+    note_off( ch );
   } else {
     MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
     kanal[ch].noteoff_time = millis() + time_to_off;

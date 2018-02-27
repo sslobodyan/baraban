@@ -35,7 +35,9 @@
       номер_модуля
       номер_входа
       уровень крутилки
-      
+0x09 Максимальный номер программы
+      0x08
+      максимальный номер      
 
 //
 0xF0
@@ -57,6 +59,17 @@ void set_type_krutilka(byte * array, unsigned array_size) { // 0x01 Назнач
   } else {
     if ( array[4] < KRUTILKI_CNT ) krutilka_set_type(array[4], array[5]);
   }
+}
+
+void set_show_analog(byte * array, unsigned array_size) { // 0x02 Состояние вывода информации сработавшего канала
+      // состояние (0-молчать, 1-вывод уровня при сработке, 2-вывод текущего уровня)
+  if (array[4] == 127) {
+    for (byte i=0; i<NUM_CHANNELS; i++) {
+      kanal[i].show = array[5];
+    }
+  } else {
+    if ( array[4] < NUM_CHANNELS ) kanal[ array[4] ].show = array[5];
+  }      
 }
 
 void set_show_krutilka(byte * array, unsigned array_size) { // 0x05 Состояние вывода информации сработавшей крутилки
@@ -81,6 +94,8 @@ void send_sysex_krutilka(uint8_t idx) { // выслать состояние к�
   send_SysEx(sizeof(arr), arr);
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 void sysexHanlerMaster(byte * array, unsigned array_size) {
@@ -91,6 +106,7 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
     case 0x05: set_show_krutilka(array,array_size); break; // Состояние вывода информации сработавшей крутилки
     default : break;
   }
+  DBGserial.print("SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
 }
 
 void sysexHanlerSlave(byte * array, unsigned array_size) {

@@ -51,15 +51,21 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 // на каких номерах нот какие обработчики крутилок
 #define POT_VELOCITY1 110
 #define POT_VELOCITY127 111
-#define POT_LENGTH0 112
-#define POT_LENGTH1 119
-#define POT_VOLUME 113
+#define POT_LENGTH0 112   // 0x70
+#define POT_LENGTH1 119   // 0x77
+#define POT_VOLUME 113    // 0x71
 
-#define PEDAL_SUSTAIN 114
-#define PEDAL_VOICE 115
-#define PEDAL_OCTAVE 116
-#define PEDAL_PROGRAM 117
-#define PEDAL_PANIC 118
+#define PEDAL_SUSTAIN 114 // 0x72
+#define PEDAL_VOICE 115   // 0x73
+#define PEDAL_OCTAVE 116  // 0x74
+#define PEDAL_PROGRAM 117 // 0x75
+#define PEDAL_PANIC 118   // 0x76
+
+// состояние любой педали
+#define PEDAL_DOWN 127
+#define PEDAL_CENTER 64
+#define PEDAL_UP 0
+
 
 volatile int multi_idx; // номер включенного мультиплексора
 volatile int last_milti_idx; // номер предыдущего (только что считанного) мультиплексора
@@ -81,7 +87,7 @@ struct stChannel {
   uint32_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
   // датчики касания
   bool pressed; // нажат
-  uint8_t show_kanal; // (0-молчать,1-вывод уровня выше трешолда,2-вывод текущего уровня)
+  uint8_t show; // (0-молчать,1-вывод уровня выше трешолда,2-вывод текущего уровня)
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
@@ -99,8 +105,9 @@ struct stConfig {
   uint8_t module = MODULE_72; // номер модуля (меняется при включении)
   uint8_t start_note = MODULE_72; // номер ноты нулевого входа
   uint8_t end_note = MODULE_72+32; // номер ноты последнего входа
-  uint8_t pedal_octave = 12; // состояние педали сдвига октавы (12==без сдвига)
-  uint8_t pedal_program = 0; // состояние педали номера программы
+  uint8_t pedal_octave = PEDAL_CENTER; // состояние педали сдвига октавы (12==без сдвига)
+  uint8_t pedal_program = PEDAL_CENTER; // состояние педали номера программы (0-отпущена, 1-вниз, 2-вверх)
+  uint8_t curr_program = 0; // текущий номер программы
   uint16_t velocity1 = 0;
   uint16_t velocity127 = 0;
   uint8_t volume=100;
@@ -110,6 +117,7 @@ struct stConfig {
 struct stNotes {
   byte kanal;
   uint16_t level; // значение АЦП при сработке
+  uint32_t micros; // время удара для обработки групп
 } notes[NOTES_CNT];
 
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот

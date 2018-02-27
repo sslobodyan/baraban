@@ -47,11 +47,11 @@ void setup_touch() {
   }
 }
 
-void add_note(byte ch, uint16_t level) { // из прерывания
+void add_note(byte ch, uint16_t level) { // из прерывания строим кольцевой буфер сработавших каналов
   if (++head_notes >= NOTES_CNT) head_notes = 0;
   notes[head_notes].kanal = ch;
   notes[head_notes].level = level;
-  tm_time = micros(); // время удара для отладки
+  notes[head_notes].micros = micros(); // время удара для обработки групп сенсоров
 }
 
 void show_buf(){ // чисто отладка
@@ -74,7 +74,7 @@ void show_buf(){ // чисто отладка
 }
 
 void changePedalSustain() {
-  if (cfg.pedal == 0) {
+  if (cfg.pedal == PEDAL_UP) {
     // заглушить все ноты при отпускании педали
     for (byte i=0; i<NUM_CHANNELS; i++) { // проверка на время note_off
       if ( kanal[i].noteoff_time ) {
