@@ -88,6 +88,7 @@ struct stChannel {
   // датчики касания
   bool pressed; // нажат
   uint8_t show; // (0-молчать,1-вывод уровня выше трешолда,2-вывод текущего уровня)
+  int16_t scan_cnt;
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
@@ -112,7 +113,9 @@ struct stConfig {
   uint16_t velocity127 = 0;
   uint8_t volume=100;
   uint32_t time_crosstalk = 2500; // us crosstalk
-  uint8_t dma_cnt = 4; // сколько опросов АЦП ждать кросстолк
+  uint8_t cross_cnt = 4; // сколько опросов АЦП ждать кросстолк 1==1.5ms  8=2.6ms 20=5мс
+  int16_t scan_cnt = 6; // количество полных сканирований АЦП после превышения трешолда
+  int16_t mute_cnt = 280; // количество полных сканирований АЦП для игнора успокаивающегося датчика
 } cfg;
 
 #define NOTES_CNT 30 // длина буфера нажатых нот 
@@ -120,7 +123,7 @@ struct stNotes {
   byte kanal;
   uint16_t level; // значение АЦП при сработке
   uint32_t micros; // время удара для обработки групп
-  uint32_t dma_cnt; // на каком сканировании запомнили
+  uint32_t cross_cnt; // на каком сканировании запомнили
 } notes[NOTES_CNT];
 
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
@@ -150,7 +153,7 @@ struct stTouchModule {
   uint16_t touched;  
 } touch[4]; // 4 модуля касания по 8 входов - к какому аналогову входу привязан
 
-volatile uint32_t dma_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
+volatile uint32_t cross_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
 
 uint32_t tm_time;
 

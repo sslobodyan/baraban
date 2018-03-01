@@ -36,6 +36,7 @@ void setup_kanal() {
     kanal[i].treshold = 0xFFFF;
     kanal[i].velocity1 = 300;
     kanal[i].velocity127 = 1300;
+    kanal[i].scan_cnt = -1;
   }
 }
 
@@ -53,7 +54,7 @@ void add_note(byte ch, uint16_t level) { // из прерывания строи
   notes[idx].kanal = ch;
   notes[idx].level = level;
   notes[idx].micros = micros(); // время удара для обработки групп сенсоров
-  notes[idx].dma_cnt = dma_cnt + cfg.dma_cnt ;
+  notes[idx].cross_cnt = cross_cnt + cfg.cross_cnt ;
   head_notes = idx;
 }
 
@@ -96,7 +97,7 @@ byte idx_note;
   if (tail_notes >= NOTES_CNT) idx_note = 0; 
   else idx_note = tail_notes + 1;
 
-  if ( dma_cnt < notes[ idx_note ].dma_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
+  if ( cross_cnt < notes[ idx_note ].cross_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
   
 //  if ( micros() - notes[ idx_note ].micros < cfg.time_crosstalk )  {
 //    return false; // еще не прошло время контроля кросстолка - играть запрещаем
@@ -106,17 +107,15 @@ byte idx_note;
     int max_idx = 0;
     uint16_t max_level = 0;
     idx_note = tail_notes;
-    uint32_t zero_time = notes[idx_note].dma_cnt;
     while ( idx_note != head_notes) {
       if ( ++idx_note >= NOTES_CNT) idx_note = 0;
       #ifdef SHOW_GROUPS_HIDE
         DBGserial.print( notes[idx_note].kanal ); DBGserial.print(">"); DBGserial.print(notes[idx_note].level); 
         DBGserial.print(" t "); 
-        DBGserial.print(notes[idx_note].dma_cnt - zero_time);
+        DBGserial.print( notes[idx_note].cross_cnt );
         DBGserial.print(" / ");
-        //DBGserial.print(notes[idx_note].dma_cnt);
+        //DBGserial.print(notes[idx_note].cross_cnt);
         //DBGserial.print(" / ");
-        zero_time = notes[idx_note].dma_cnt;
       #endif  
       if ( notes[idx_note].level > max_level ) {
         max_level = notes[idx_note].level;
@@ -132,11 +131,15 @@ byte idx_note;
       if ( ++idx_note >= NOTES_CNT) idx_note=0;
       if ( idx_note != max_idx ) {
         notes[idx_note].level = 0;
+        kanal[ notes[idx_note].kanal ].scan_cnt = cfg.scan_cnt+1; // mute fantom channel
         #ifdef SHOW_GROUPS_HIDE
           DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
         #endif  
       }
     }
+    #ifdef SHOW_GROUPS_HIDE
+      DBGserial.println();
+    #endif  
     return true; // можно играть  
 }
 

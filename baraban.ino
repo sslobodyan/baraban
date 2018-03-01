@@ -93,10 +93,10 @@ void main_loop(){
     if ( check_groups() ) { // контроль кросстолка
       //DBGserial.println( micros() );
       bool flag=false;
-      while (head_notes != tail_notes) {
+      //while (head_notes != tail_notes) {
         if (++tail_notes >= NOTES_CNT) tail_notes=0;
         flag |= note_on(tail_notes); // играть ноты из буфера нажатых нот
-      }
+      //}
       if ( flag ) DBGserial.println();    
     }
   }

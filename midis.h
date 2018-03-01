@@ -120,11 +120,6 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
 
   voice += cfg.pedal_voice; // добавляем сдвиг голосов по педалям
 
-  if ( voice != cfg.voice ) {
-    cfg.voice = voice; // запомним текущий голос для уменьшения трафика
-    MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
-  }
-
   // границы громкости учитывая крутилки
   int16_t vel1 = kanal[ch].velocity1+cfg.velocity1;
   int16_t vel127 = kanal[ch].velocity127-cfg.velocity127;
@@ -146,23 +141,33 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
     note_off( ch );
     return false;
   } else {
+    pinMode(PC15, OUTPUT);
+    digitalWrite( PC15,  !digitalRead(PC15) );
+    if ( voice != cfg.voice ) {
+      cfg.voice = voice; // запомним текущий голос для уменьшения трафика
+      MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
+    }
+
     MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
     kanal[ch].noteoff_time = millis() + time_to_off;
+    //digitalWrite(PC15, LOW);
   }
 
-#define SHOW_NOTE_ON_
+#define SHOW_NOTE_ON
 
   #ifdef SHOW_NOTE_ON
     DBGserial.print("  ");    
     DBGserial.print( ch );
-    DBGserial.print("\t");    
+    DBGserial.print("\tc ");    
+    DBGserial.print( notes[idx].cross_cnt );    
+    DBGserial.print("\tl ");    
     DBGserial.print( level );    
-    DBGserial.print("\t");    
+    DBGserial.print("\tv ");    
     DBGserial.print( velocity );    
     DBGserial.print(" ");    
     for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");
     DBGserial.print(" ");   
-    DBGserial.print( notes[idx].dma_cnt );    
+    DBGserial.print( notes[idx].cross_cnt );    
     DBGserial.print(" ");    
     for (byte i=0; i<NUM_CHANNELS; i++) {
       //DBGserial.print(kanal[i].pressed); DBGserial.print(",");

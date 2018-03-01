@@ -4,6 +4,39 @@ uint32 calc_adc_SQR1(uint8 adc_sequence[4]);
 
 void store_maximum() {
   uint32_t idx=1;
+  uint32_t buf;
+  for( uint32_t i=0; i<NUM_CHANNELS; i++) { // 0..32
+
+    if (kanal[i].note == 0) continue; // если нота не назначена, то обработку канала пропускаем
+
+    buf = buf_adc[last_buf_idx][idx];
+    
+    if ( kanal[i].scan_cnt == -1 ) { // еще не начинали сканировать - порог пока не превышен
+        if ( buf > kanal[i].treshold ) { // превысили порог - начало удара
+          kanal[i].scan_cnt = 0; // начали поиска максимума
+          kanal[i].adc_max = buf;
+        }
+    } else { // уже ловим максимум
+        kanal[i].scan_cnt++;
+        if ( kanal[i].adc_max < buf ) kanal[i].adc_max = buf;
+        if ( buf < kanal[i].treshold ) {
+          kanal[i].scan_cnt = -1; // приняли короткий шумовой всплеск - перезапускаем сканирование     
+        }
+        if ( kanal[i].scan_cnt == cfg.scan_cnt  ) { // просканировали нужное количество раз
+            add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть        
+        }
+        if ( kanal[i].scan_cnt == cfg.mute_cnt  ) { // выждали конец колебаний
+            kanal[i].scan_cnt = -1; // готовы к следующему удару
+            //digitalWrite( PC15,  !digitalRead(PC15) );
+        }
+    }
+    idx += 2;
+  } // for
+}
+
+
+void store_maximum_old() {
+  uint32_t idx=1;
   for( uint32_t i=0; i<NUM_CHANNELS; i++) { // 0..32
 
     if (kanal[i].note == 0) continue; // если нота не назначена, то обработку канала пропускаем
@@ -109,7 +142,7 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
   next_multiplexor();
 
   if (multi_idx == 0) { // прошли по всем 4 мультиплексорам - отсканированы все 32 датчика
-    dma_cnt++;
+    cross_cnt++;
     if ( scan_autotreshold ) {
       store_autotreshold();
     }
