@@ -111,6 +111,8 @@ struct stConfig {
   uint16_t velocity1 = 0;
   uint16_t velocity127 = 0;
   uint8_t volume=100;
+  uint32_t time_crosstalk = 2500; // us crosstalk
+  uint8_t dma_cnt = 4; // сколько опросов АЦП ждать кросстолк
 } cfg;
 
 #define NOTES_CNT 30 // длина буфера нажатых нот 
@@ -118,6 +120,7 @@ struct stNotes {
   byte kanal;
   uint16_t level; // значение АЦП при сработке
   uint32_t micros; // время удара для обработки групп
+  uint32_t dma_cnt; // на каком сканировании запомнили
 } notes[NOTES_CNT];
 
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
@@ -147,6 +150,8 @@ struct stTouchModule {
   uint16_t touched;  
 } touch[4]; // 4 модуля касания по 8 входов - к какому аналогову входу привязан
 
+volatile uint32_t dma_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
+
 uint32_t tm_time;
 
 
@@ -160,4 +165,5 @@ void set_handl(uint8_t tp);
 void krutilka_set_type(uint8_t idx, uint8_t tp);
 void note_off(byte ch);
 void send_SysEx(byte size, byte *arr);
+bool check_groups();
 

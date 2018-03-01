@@ -48,10 +48,13 @@ void setup_touch() {
 }
 
 void add_note(byte ch, uint16_t level) { // из прерывания строим кольцевой буфер сработавших каналов
-  if (++head_notes >= NOTES_CNT) head_notes = 0;
-  notes[head_notes].kanal = ch;
-  notes[head_notes].level = level;
-  notes[head_notes].micros = micros(); // время удара для обработки групп сенсоров
+  byte idx = head_notes;
+  if ( ++idx >= NOTES_CNT) idx = 0;
+  notes[idx].kanal = ch;
+  notes[idx].level = level;
+  notes[idx].micros = micros(); // время удара для обработки групп сенсоров
+  notes[idx].dma_cnt = dma_cnt + cfg.dma_cnt ;
+  head_notes = idx;
 }
 
 void show_buf(){ // чисто отладка
@@ -83,5 +86,57 @@ void changePedalSustain() {
       }
     }
   }
+}
+
+bool check_groups() { // контроль кросстолка
+byte idx_note;
+
+#define SHOW_GROUPS_HIDE_
+
+  if (tail_notes >= NOTES_CNT) idx_note = 0; 
+  else idx_note = tail_notes + 1;
+
+  if ( dma_cnt < notes[ idx_note ].dma_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
+  
+//  if ( micros() - notes[ idx_note ].micros < cfg.time_crosstalk )  {
+//    return false; // еще не прошло время контроля кросстолка - играть запрещаем
+//  }
+  
+    // ищем самый громкий сигнал
+    int max_idx = 0;
+    uint16_t max_level = 0;
+    idx_note = tail_notes;
+    uint32_t zero_time = notes[idx_note].dma_cnt;
+    while ( idx_note != head_notes) {
+      if ( ++idx_note >= NOTES_CNT) idx_note = 0;
+      #ifdef SHOW_GROUPS_HIDE
+        DBGserial.print( notes[idx_note].kanal ); DBGserial.print(">"); DBGserial.print(notes[idx_note].level); 
+        DBGserial.print(" t "); 
+        DBGserial.print(notes[idx_note].dma_cnt - zero_time);
+        DBGserial.print(" / ");
+        //DBGserial.print(notes[idx_note].dma_cnt);
+        //DBGserial.print(" / ");
+        zero_time = notes[idx_note].dma_cnt;
+      #endif  
+      if ( notes[idx_note].level > max_level ) {
+        max_level = notes[idx_note].level;
+        max_idx = idx_note;
+      }
+    }
+    #ifdef SHOW_GROUPS_HIDE
+      DBGserial.println(); DBGserial.print("max ");DBGserial.println( notes[max_idx].kanal );
+    #endif  
+    // глушим все более слабые сигналы
+    idx_note = tail_notes;
+    while ( idx_note != head_notes) {
+      if ( ++idx_note >= NOTES_CNT) idx_note=0;
+      if ( idx_note != max_idx ) {
+        notes[idx_note].level = 0;
+        #ifdef SHOW_GROUPS_HIDE
+          DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
+        #endif  
+      }
+    }
+    return true; // можно играть  
 }
 

@@ -92,12 +92,14 @@ void midiSetup(){
   MIDI_Slave.setHandleSystemExclusive(sysexHanlerSlave);
 }
 
-void note_on(byte idx) { // играть ноту по индексу из буфера нот
-  
+bool note_on(byte idx) { // играть ноту по индексу из буфера нот
+
   byte ch = notes[idx].kanal;
   uint16_t level = notes[idx].level;
   uint8_t voice;
   uint32_t time_to_off; // когда посылать note_off
+
+  if (level == 0) return false;
 
   // определить каким голосом играть ноту в зависимости от датчика касания и педали сустейна, а также сдвига голосов
   if ( cfg.pedal > 42 ) { // педаль или полупедаль
@@ -123,43 +125,14 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
     MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
   }
 
+  // границы громкости учитывая крутилки
   int16_t vel1 = kanal[ch].velocity1+cfg.velocity1;
   int16_t vel127 = kanal[ch].velocity127-cfg.velocity127;
-  
+
+  // по границам определяем уровень
   int16_t velocity = map( level , vel1, vel127, 1, 127);
   if (velocity > 126) velocity=127;
   if (velocity < 1) velocity=0;
-
-  if (velocity == 0) { // прижали палочку - глушим ранее играющую ноту
-    note_off( ch );
-  } else {
-    MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
-    kanal[ch].noteoff_time = millis() + time_to_off;
-  }
-
-  //LED_ON;
-  if ( (TEST_KANAL_RED != ch) & (TEST_KANAL_GREEN != ch) ) { // вывод отчета по кроссталку
-    DBGserial.print(" ");
-    DBGserial.print( ch );
-    DBGserial.print("=");
-    DBGserial.print( notes[head_notes].level );
-    DBGserial.print(" (+");
-    DBGserial.print( notes[head_notes].level - kanal[ch].treshold );
-    DBGserial.print(") ");
-    DBGserial.print( kanal[ch].pressed );
-    DBGserial.println();    
-  } else {
-    DBGserial.print( ch );
-    DBGserial.print("\t");    
-    DBGserial.print( ch );
-    DBGserial.print("\t");    
-    for (byte i=0; i<(velocity+8)/8; i++) DBGserial.print("=");
-    DBGserial.print(" ");    
-    for (byte i=0; i<NUM_CHANNELS; i++) {
-      //DBGserial.print(kanal[i].pressed); DBGserial.print(",");
-    }
-    DBGserial.println( kanal[ch].pressed );
-  }
 
   if (TEST_KANAL_RED == ch) {
     RED_ON;
@@ -168,7 +141,40 @@ void note_on(byte idx) { // играть ноту по индексу из бу�
   if (TEST_KANAL_GREEN == ch) {
     GREEN_ON;
   }
-  //LED_OFF;
+
+  if (velocity == 0) { // прижали палочку - глушим ранее играющую ноту
+    note_off( ch );
+    return false;
+  } else {
+    MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
+    kanal[ch].noteoff_time = millis() + time_to_off;
+  }
+
+#define SHOW_NOTE_ON_
+
+  #ifdef SHOW_NOTE_ON
+    DBGserial.print("  ");    
+    DBGserial.print( ch );
+    DBGserial.print("\t");    
+    DBGserial.print( level );    
+    DBGserial.print("\t");    
+    DBGserial.print( velocity );    
+    DBGserial.print(" ");    
+    for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");
+    DBGserial.print(" ");   
+    DBGserial.print( notes[idx].dma_cnt );    
+    DBGserial.print(" ");    
+    for (byte i=0; i<NUM_CHANNELS; i++) {
+      //DBGserial.print(kanal[i].pressed); DBGserial.print(",");
+    }
+    //DBGserial.print( kanal[ch].pressed );
+    DBGserial.println();
+    return true;
+  #else
+    return false;  
+  #endif
+  
+  
 }
 
 void note_off(byte ch) {
