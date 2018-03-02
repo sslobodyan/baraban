@@ -37,6 +37,7 @@ void setup_kanal() {
     kanal[i].velocity1 = 300;
     kanal[i].velocity127 = 1300;
     kanal[i].scan_cnt = -1;
+    kanal[i].group = 1;
   }
 }
 
@@ -50,15 +51,16 @@ void setup_touch() {
 
 void add_note(byte ch, uint16_t level) { // из прерывания строим кольцевой буфер сработавших каналов
   byte idx = head_notes;
-  if ( ++idx >= NOTES_CNT) idx = 0;
+  if ( ++idx >= NOTES_CNT ) idx = 0;
   notes[idx].kanal = ch;
   notes[idx].level = level;
-  notes[idx].micros = micros(); // время удара для обработки групп сенсоров
-  notes[idx].cross_cnt = cross_cnt + cfg.cross_cnt ;
+  notes[idx].cross_cnt = adc_dma_cnt + cfg.cross_cnt ;
+  notes[idx].group = kanal[ch].group; // группу запомним для бысрой фильтрации в кросстолке
   head_notes = idx;
 }
 
 void show_buf(){ // чисто отладка
+  stop_scan = true;
   byte n = last_buf_idx;
   for (byte i=0; i<BUFFER_CNT; i++ ) {
     if (++n >= BUFFER_CNT) n=0;
@@ -75,6 +77,7 @@ void show_buf(){ // чисто отладка
     DBGserial.println( );
     delay(20);
   }
+  stop_scan = false;
 }
 
 void changePedalSustain() {
@@ -97,11 +100,10 @@ byte idx_note;
   if (tail_notes >= NOTES_CNT) idx_note = 0; 
   else idx_note = tail_notes + 1;
 
-  if ( cross_cnt < notes[ idx_note ].cross_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
-  
-//  if ( micros() - notes[ idx_note ].micros < cfg.time_crosstalk )  {
-//    return false; // еще не прошло время контроля кросстолка - играть запрещаем
-//  }
+  if ( adc_dma_cnt < notes[ idx_note ].cross_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
+
+  uint8_t group = notes[ idx_note ].group; // запомним группу этой ноты
+  if ( group == 0 ) return true; // группа не установлена - без контроля кроссталка
   
     // ищем самый громкий сигнал
     int max_idx = 0;
@@ -109,6 +111,7 @@ byte idx_note;
     idx_note = tail_notes;
     while ( idx_note != head_notes) {
       if ( ++idx_note >= NOTES_CNT) idx_note = 0;
+      if ( group != notes[ idx_note ].group ) continue; 
       #ifdef SHOW_GROUPS_HIDE
         DBGserial.print( notes[idx_note].kanal ); DBGserial.print(">"); DBGserial.print(notes[idx_note].level); 
         DBGserial.print(" t "); 

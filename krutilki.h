@@ -18,7 +18,7 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     }
     // если запросили вывод SysEx о состоянии крутилок
     if ( krutilka[ krutilka_idx ].show ) {
-      send_sysex_krutilka( krutilka_idx );
+      send_sysex_krutilka_08( krutilka_idx );
     }
   }
   if ( ++krutilka_idx >= KRUTILKI_CNT ) krutilka_idx = 0;
@@ -115,6 +115,7 @@ void setPedalProgram( uint8_t value ) {
     if ( cfg.pedal_program != PEDAL_UP ) {
       cfg.pedal_program = PEDAL_UP;
       cfg.curr_program += 1;
+      if (cfg.curr_program > cfg.max_program) cfg.curr_program = cfg.max_program;
       DBGserial.print("Program++ =");DBGserial.println( cfg.curr_program ); // ToDo Debug
     }
   } else if ( value > 55 && value < 75 ) {

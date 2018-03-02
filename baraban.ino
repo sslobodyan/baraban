@@ -91,12 +91,8 @@ void main_loop(){
 
   if (head_notes != tail_notes) { // что-то новое в буфере активных нот
     if ( check_groups() ) { // контроль кросстолка
-      //DBGserial.println( micros() );
-      bool flag=false;
-      //while (head_notes != tail_notes) {
-        if (++tail_notes >= NOTES_CNT) tail_notes=0;
-        flag |= note_on(tail_notes); // играть ноты из буфера нажатых нот
-      //}
+      if (++tail_notes >= NOTES_CNT) tail_notes=0;
+      bool flag = note_on(tail_notes); // играть ноту из буфера нажатых нот
       if ( flag ) DBGserial.println();    
     }
   }
@@ -107,6 +103,14 @@ void main_loop(){
         note_off(i);
         kanal[i].noteoff_time = 0;
       }
+    }
+  }
+
+  if (cfg.metronom > 0) {
+    if ( millis() - old_metronom >= cfg.metronom ) {
+      old_metronom += cfg.metronom;
+      MIDI_Master.sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS);      
+      kanal[cfg.metronom_kanal].noteoff_time = millis() + 50;
     }
   }
 

@@ -81,19 +81,14 @@ struct stChannel {
   uint32_t velocity127; // уровень для громкости == 127
   // рассчетные
   uint32_t adc_max; // максимум с момента превышения порога
-  uint32_t scan_time; // us времени начала опроса на максимум
-  uint32_t mute_time; // ms время начала запрета сканировать кнопку или 0 если можно сканировать
   uint32_t noteoff_time; // когда посылать note_off ms
-  uint32_t cnt_over; // количество последовательных превышений уровня для отсеивания коротких шумов
-  // датчики касания
   bool pressed; // нажат
   uint8_t show; // (0-молчать,1-вывод уровня выше трешолда,2-вывод текущего уровня)
   int16_t scan_cnt;
+  uint8_t group; // группа по кросстолку
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
-  uint32_t scan_time = 1200; // us ожидания после первого превышения порога == время набора максимума
-  uint32_t mute_time = 60; // ms запрета сканирования после фиксации сработки кнопки (вычисление mute_time)
   uint32_t autotreshold_above = 50; // порог выше уровня шумов
   uint32_t noteoff_time0 = 500; // ms звучания ноты без педали
   uint32_t noteoff_time1 = 2500; // ms звучания ноты с полупедалью
@@ -109,22 +104,27 @@ struct stConfig {
   uint8_t pedal_octave = PEDAL_CENTER; // состояние педали сдвига октавы (12==без сдвига)
   uint8_t pedal_program = PEDAL_CENTER; // состояние педали номера программы (0-отпущена, 1-вниз, 2-вверх)
   uint8_t curr_program = 0; // текущий номер программы
+  uint8_t max_program = 10; // максимальный номер программы
   uint16_t velocity1 = 0;
   uint16_t velocity127 = 0;
   uint8_t volume=100;
-  uint32_t time_crosstalk = 2500; // us crosstalk
   uint8_t cross_cnt = 4; // сколько опросов АЦП ждать кросстолк 1==1.5ms  8=2.6ms 20=5мс
   int16_t scan_cnt = 6; // количество полных сканирований АЦП после превышения трешолда
   int16_t mute_cnt = 280; // количество полных сканирований АЦП для игнора успокаивающегося датчика
+  uint32_t metronom = 0; // == 60000 / 240  интервал в миллисекундах, если 0 - то молчим
+  uint8_t metronom_volume = 50; // громкость метронома
+  uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
 } cfg;
 
 #define NOTES_CNT 30 // длина буфера нажатых нот 
 struct stNotes {
   byte kanal;
   uint16_t level; // значение АЦП при сработке
-  uint32_t micros; // время удара для обработки групп
+  byte group; 
   uint32_t cross_cnt; // на каком сканировании запомнили
-} notes[NOTES_CNT];
+};
+
+volatile stNotes notes[NOTES_CNT];
 
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
@@ -153,7 +153,8 @@ struct stTouchModule {
   uint16_t touched;  
 } touch[4]; // 4 модуля касания по 8 входов - к какому аналогову входу привязан
 
-volatile uint32_t cross_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
+volatile uint32_t adc_dma_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
+uint32_t old_metronom = 0; // время удара метронома
 
 uint32_t tm_time;
 

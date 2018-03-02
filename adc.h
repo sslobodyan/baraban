@@ -2,7 +2,7 @@ uint32 calc_adc_SQR3(uint8 adc_sequence[6]);
 uint32 calc_adc_SQR2(uint8 adc_sequence[6]);
 uint32 calc_adc_SQR1(uint8 adc_sequence[4]);
 
-void store_maximum() {
+inline void store_maximum() {
   uint32_t idx=1;
   uint32_t buf;
   for( uint32_t i=0; i<NUM_CHANNELS; i++) { // 0..32
@@ -35,59 +35,18 @@ void store_maximum() {
 }
 
 
-void store_maximum_old() {
-  uint32_t idx=1;
-  for( uint32_t i=0; i<NUM_CHANNELS; i++) { // 0..32
-
-    if (kanal[i].note == 0) continue; // если нота не назначена, то обработку канала пропускаем
-    
-    if ( kanal[i].mute_time == 0 ) { // разрешено сканирование канала
-      if ( kanal[i].scan_time == 0 ) { // еще не начинали сканировать - порог пока не превышен
-        if ( buf_adc[last_buf_idx][idx] > kanal[i].treshold ) { // превысили порог - начало удара
-          kanal[i].scan_time = micros(); // время начала поиска максимума
-          if (kanal[i].scan_time == 0) kanal[i].scan_time = 1;
-          kanal[i].adc_max = buf_adc[last_buf_idx][idx];
-          kanal[i].cnt_over = 0;
-        }
-      } else { // уже ловим максимум
-        if ( buf_adc[last_buf_idx][idx] >= kanal[i].treshold ) {
-          kanal[i].cnt_over++; 
-        } else {
-          kanal[i].scan_time = 0; // приняли шумовой всплеск - перезапускаем сканирование     
-        }
-        if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) kanal[i].adc_max = buf_adc[last_buf_idx][idx];
-        if ( micros() - kanal[i].scan_time > cfg.scan_time  ) { // время сканирования максимума вышло
-          kanal[i].scan_time = 0;
-          if (kanal[i].cnt_over >= cfg.cnt_over) { // набрали количество превышений порога - сигнал валидный
-            kanal[i].mute_time = millis(); // запрещаем следующее сканирование
-            if (kanal[i].mute_time == 0) kanal[i].mute_time = 1;
-            add_note( i, kanal[i].adc_max ); // запоминаем ноту с какого канала надо проиграть        
-          }
-        }
-      }
-    } 
-    else { // контроль времени запрета сканирования
-      if ( millis() - kanal[i].mute_time > cfg.mute_time ) { // время вышло, можно разрешать новое сканирование
-        if ( buf_adc[last_buf_idx][idx] <= kanal[i].treshold ) { // уровень ниже порога - разрешаем новое сканированеи
-          kanal[i].mute_time = 0;  
-        }
-      }
-    }
-    idx += 2;
-  } // for
-}
 
 void store_autotreshold() {
   byte idx=1;
   for( byte i=0; i<NUM_CHANNELS; i++) {
     if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) {
-      kanal[i].cnt_over += 1;
-      if (kanal[i].cnt_over >= cfg.cnt_over) {
+      kanal[i].scan_cnt += 1;
+      if (kanal[i].scan_cnt >= cfg.scan_cnt) {
         kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
-        kanal[i].cnt_over = 0;
+        kanal[i].scan_cnt = 0;
       }
     } else {
-      kanal[i].cnt_over = 0;
+      kanal[i].scan_cnt = 0;
     }
     idx += 2;
   } 
@@ -142,7 +101,7 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
   next_multiplexor();
 
   if (multi_idx == 0) { // прошли по всем 4 мультиплексорам - отсканированы все 32 датчика
-    cross_cnt++;
+    adc_dma_cnt++;
     if ( scan_autotreshold ) {
       store_autotreshold();
     }
