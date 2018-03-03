@@ -50,8 +50,8 @@ void setup_touch() {
 }
 
 void add_note(byte ch, uint16_t level) { // из прерывания строим кольцевой буфер сработавших каналов
-  byte idx = head_notes;
-  if ( ++idx >= NOTES_CNT ) idx = 0;
+  byte idx = head_notes + 1;
+  if ( idx >= NOTES_CNT ) idx = 0;
   notes[idx].kanal = ch;
   notes[idx].level = level;
   notes[idx].cross_cnt = adc_dma_cnt + cfg.cross_cnt ;
@@ -93,12 +93,11 @@ void changePedalSustain() {
 }
 
 bool check_groups() { // контроль кросстолка
-byte idx_note;
+byte idx_note=0;
 
 #define SHOW_GROUPS_HIDE_
 
-  if (tail_notes >= NOTES_CNT) idx_note = 0; 
-  else idx_note = tail_notes + 1;
+  if (tail_notes < NOTES_CNT-1) idx_note = tail_notes + 1;
 
   if ( adc_dma_cnt < notes[ idx_note ].cross_cnt ) return false; // еще не прошло время контроля кросстолка - играть запрещаем
 
@@ -144,5 +143,27 @@ byte idx_note;
       DBGserial.println();
     #endif  
     return true; // можно играть  
+}
+
+#include "libmaple/usart.h"
+void putc_serial3( uint8_t ch ) {
+  // отключить прерывание по ТХ, блокирующе передать байт
+  while(!(USART3->regs->SR & USART_SR_TXE))
+    ;
+  USART3->regs->DR = (uint8)ch;
+  while(!(USART3->regs->SR & USART_SR_TXE))
+    ; 
+}
+
+void MIDI_Master_sendNoteOn( byte note , byte vel, byte chan){
+  putc_serial3( 0x90 + ( (chan-1) & 0x0F) );
+  putc_serial3( note & 0x7F );
+  putc_serial3( vel  & 0x7F );
+}
+
+void MIDI_Master_sendNoteOff( byte note , byte vel, byte chan){
+  putc_serial3( 0x80 + ( (chan-1) & 0x0F) );
+  putc_serial3( note & 0x7F );
+  putc_serial3( vel  & 0x7F );
 }
 

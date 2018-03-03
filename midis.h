@@ -148,7 +148,7 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
       MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
     }
 
-    MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
+    MIDI_Master_sendNoteOn( kanal[ch].note , velocity, DRUMS);      
     kanal[ch].noteoff_time = millis() + time_to_off;
     //digitalWrite(PC15, LOW);
   }
@@ -184,7 +184,7 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
 
 void note_off(byte ch) {
   
-  MIDI_Master.sendNoteOff( kanal[ch].note , 0, DRUMS);
+  MIDI_Master_sendNoteOff( kanal[ch].note , 0, DRUMS);
 
   if (TEST_KANAL_RED == ch) {
     RED_OFF;

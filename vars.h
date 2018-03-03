@@ -29,8 +29,8 @@
 #define RED_OFF digitalWrite(RED_LED, LOW)
 #define RED_TOGGLE digitalWrite(RED_LED,!digitalRead(RED_LED))
 
-#define TEST_KANAL_GREEN 10
-#define TEST_KANAL_RED 0
+#define TEST_KANAL_GREEN 30
+#define TEST_KANAL_RED 31
 
 #define MODULE_72 72
 #define MODULE_60 60
@@ -111,20 +111,19 @@ struct stConfig {
   uint8_t cross_cnt = 4; // сколько опросов АЦП ждать кросстолк 1==1.5ms  8=2.6ms 20=5мс
   int16_t scan_cnt = 6; // количество полных сканирований АЦП после превышения трешолда
   int16_t mute_cnt = 280; // количество полных сканирований АЦП для игнора успокаивающегося датчика
-  uint32_t metronom = 0; // == 60000 / 240  интервал в миллисекундах, если 0 - то молчим
+  uint32_t metronom = 500; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим
   uint8_t metronom_volume = 50; // громкость метронома
   uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
+  uint8_t metronom_krat = 4; // кратность долей метронома
 } cfg;
 
-#define NOTES_CNT 30 // длина буфера нажатых нот 
+#define NOTES_CNT 10 // длина буфера нажатых нот 
 struct stNotes {
   byte kanal;
   uint16_t level; // значение АЦП при сработке
   byte group; 
   uint32_t cross_cnt; // на каком сканировании запомнили
-};
-
-volatile stNotes notes[NOTES_CNT];
+} notes[NOTES_CNT];
 
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
@@ -155,6 +154,8 @@ struct stTouchModule {
 
 volatile uint32_t adc_dma_cnt=0; // последовательный счетчик прерываний ДМА по АЦП
 uint32_t old_metronom = 0; // время удара метронома
+uint8_t metronom_krat = cfg.metronom_krat-1; // кратность метронома
+volatile bool adc_new_cycle; // выставляется в прерывании при включении 0 мультиплексора (новый цикд)
 
 uint32_t tm_time;
 

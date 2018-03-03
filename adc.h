@@ -71,7 +71,11 @@ void  next_multiplexor(){ // выбрать следующий мультипл�
   
   switch (multi_idx) {
     case 0:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, bit_c); break;
+      // gpio_write_bit(GPIOB, 0, LOW);
+      digitalWrite(MX_A001, 0);
+      digitalWrite(MX_A010, 0);
+      digitalWrite(MX_A100, bit_c); 
+      break;
     case 1:
       digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, bit_c); break;
     case 2:
@@ -108,6 +112,7 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
     else {
       store_maximum();
     }  
+    adc_new_cycle = true;
   }
 
   if (! stop_scan ) setup_new_scan(); // чисто отладка

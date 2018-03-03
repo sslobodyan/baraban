@@ -36,6 +36,7 @@ void setup() {
   DBGserial.print( setup_mpr() );
   DBGserial.println();
   setup_touch(); // распределение датчиков касания по каналах
+
 }
 
 void setup_module() { // по перемычкам определить тип модуля и соотв. назначить номера нот  
@@ -69,8 +70,6 @@ void show_buf_krutilka() {
 }
 
 
-uint32_t test_time = 5000;
-
 void main_loop(){  
 
 #ifdef DEBUG_USART
@@ -79,10 +78,13 @@ void main_loop(){
     #define TEST_CH 20
     kanal[TEST_CH].note = INST;
     tm_time =  200 + random(200) + millis();
-    MIDI_Master.sendNoteOn( kanal[TEST_CH].note , 120, DRUMS);      
+    MIDI_Master_sendNoteOn( kanal[TEST_CH].note , 120, DRUMS);      
     kanal[TEST_CH].noteoff_time = millis() + 200;
   }
 #endif
+
+  MIDI_Master.read();
+  MIDI_Slave.read();  
 
   update_krutilki(); // положение текущей педали-крутилки на центральном модуле
   
@@ -91,7 +93,8 @@ void main_loop(){
 
   if (head_notes != tail_notes) { // что-то новое в буфере активных нот
     if ( check_groups() ) { // контроль кросстолка
-      if (++tail_notes >= NOTES_CNT) tail_notes=0;
+      tail_notes++;
+      if (tail_notes >= NOTES_CNT) tail_notes=0;
       bool flag = note_on(tail_notes); // играть ноту из буфера нажатых нот
       if ( flag ) DBGserial.println();    
     }
@@ -108,38 +111,28 @@ void main_loop(){
 
   if (cfg.metronom > 0) {
     if ( millis() - old_metronom >= cfg.metronom ) {
+      #define METRONOM_HARD 35
+      #define METRONOM_SOFT 25
       old_metronom += cfg.metronom;
-      MIDI_Master.sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS);      
-      kanal[cfg.metronom_kanal].noteoff_time = millis() + 50;
+      //adc_new_cycle = false; if (!stop_scan) while ( !adc_new_cycle ) ;
+      if ( cfg.metronom_krat ) {
+        if ( ++metronom_krat == cfg.metronom_krat ) { // сильная доля
+          metronom_krat = 0;
+          MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS);      
+          kanal[cfg.metronom_kanal].noteoff_time = millis() + METRONOM_HARD;
+          RED_ON;
+        } else { // слабые доли
+          MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal-1].note , cfg.metronom_volume, DRUMS);           
+          kanal[cfg.metronom_kanal-1].noteoff_time = millis() + METRONOM_SOFT;
+          GREEN_ON;
+        }
+      } else {
+        MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS); 
+        kanal[cfg.metronom_kanal].noteoff_time = millis() + METRONOM_HARD;
+        RED_ON;
+      }    
     }
   }
-
-//  if (MIDIserial.available()) {
-//    MIDIserial.print("In buffer 0x");
-//    MIDIserial.print( MIDIserial.peek(), HEX );
-//    MIDIserial.println(" byte");
-//  }
-
-  MIDI_Master.read();
-  MIDI_Slave.read();
-
-/*
-  if (test_time) {
-    if (millis() > test_time) {
-      test_time = 0;
-      DBGserial.println("[i] [mx] [ch]");
-      for (byte i=0; i<KRUTILKI_CNT; i++ ) {
-        DBGserial.print("["); DBGserial.print(i);DBGserial.print("] ");
-        DBGserial.print("["); DBGserial.print(krutilka[ i ].mx);DBGserial.print("] ");
-        DBGserial.print("["); DBGserial.print(krutilka[ i ].ch);DBGserial.print("] ");
-        DBGserial.print( krutilka[ i ].value );
-        DBGserial.println();
-      }
-      show_buf_krutilka();
-    }
-  }
-*/
-  
 }
 
 void set_autotreshold(){
@@ -162,5 +155,8 @@ void loop() {
   scan_autotreshold = true;
   setup_new_scan(); // запускаем опрос в работу
   set_autotreshold(); // выставляем уровень шума
+
+  //stop_scan = true; // ToDo debug
+
   while (1) main_loop();
 }
