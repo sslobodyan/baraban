@@ -40,14 +40,8 @@ void store_autotreshold() {
   byte idx=1;
   for( byte i=0; i<NUM_CHANNELS; i++) {
     if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) {
-      kanal[i].scan_cnt += 1;
-      if (kanal[i].scan_cnt >= cfg.scan_cnt) {
-        kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
-        kanal[i].scan_cnt = 0;
-      }
-    } else {
-      kanal[i].scan_cnt = 0;
-    }
+      kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
+    } 
     idx += 2;
   } 
 }
@@ -56,11 +50,9 @@ static bool bit_c;
 void  next_multiplexor(){ // выбрать следующий мультиплексор
   last_milti_idx = multi_idx; // запоминаем какой мультиплексор просканировали
 
-  //if (++multi_krutilka_idx >= KRUTILKI_CNT) multi_krutilka_idx = 0;
-  
   if (++multi_idx >= NUM_MULTIPLEXORS) {
     multi_idx = 0; // новый проход по всем мультиплексорам
-    last_buf_idx = buf_idx;
+    last_buf_idx = buf_idx; // запоминаем куда последние измерения сканировали
     bit_c = !bit_c;
     if (++buf_idx >= BUFFER_CNT) {
       buf_idx=0;
@@ -106,12 +98,14 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
 
   if (multi_idx == 0) { // прошли по всем 4 мультиплексорам - отсканированы все 32 датчика
     adc_dma_cnt++;
+/*    
     if ( scan_autotreshold ) {
       store_autotreshold();
     }
     else {
       store_maximum();
     }  
+*/    
     adc_new_cycle = true;
   }
 

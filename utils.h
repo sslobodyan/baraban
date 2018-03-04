@@ -145,6 +145,8 @@ byte idx_note=0;
     return true; // можно играть  
 }
 
+
+
 #include "libmaple/usart.h"
 void putc_serial3( uint8_t ch ) {
   // отключить прерывание по ТХ, блокирующе передать байт
@@ -156,14 +158,20 @@ void putc_serial3( uint8_t ch ) {
 }
 
 void MIDI_Master_sendNoteOn( byte note , byte vel, byte chan){
-  putc_serial3( 0x90 + ( (chan-1) & 0x0F) );
+  putc_serial3( 0x90 - 1 + ( chan & 0x0F ) );
   putc_serial3( note & 0x7F );
   putc_serial3( vel  & 0x7F );
 }
 
 void MIDI_Master_sendNoteOff( byte note , byte vel, byte chan){
-  putc_serial3( 0x80 + ( (chan-1) & 0x0F) );
+  putc_serial3( 0x80 - 1 + ( chan & 0x0F) );
   putc_serial3( note & 0x7F );
   putc_serial3( vel  & 0x7F );
+}
+
+void MIDI_Master_sendControlChange( byte note , byte vel, byte chan) {
+  putc_serial3( 0xB0 - 1 + ( chan & 0x0F ) );
+  putc_serial3( note & 0x7F );
+  putc_serial3( vel  & 0x7F );  
 }
 

@@ -13,7 +13,7 @@
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
   
-  DBGserial.begin(115200);
+  DBGserial.begin(MIDI_SPEED);
   DBGserial.print("Started... ");
     
   setup_ADC();
@@ -72,16 +72,26 @@ void show_buf_krutilka() {
 
 void main_loop(){  
 
-#ifdef DEBUG_USART
-  if ( millis() > tm_time ) {
-    #define INST 38
-    #define TEST_CH 20
-    kanal[TEST_CH].note = INST;
-    tm_time =  200 + random(200) + millis();
-    MIDI_Master_sendNoteOn( kanal[TEST_CH].note , 120, DRUMS);      
-    kanal[TEST_CH].noteoff_time = millis() + 200;
+  if (adc_new_cycle) { // отсканировали все входы
+    adc_new_cycle = false;
+    if ( scan_autotreshold ) {
+      store_autotreshold(); // набираем максимумы по каналам
+      if (  millis() >= cfg.autotreshold_time ) { // прошло время автотрешолда
+        scan_autotreshold = false;
+        for (byte i=0; i<NUM_CHANNELS; i++) {
+          kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
+          kanal[i].velocity1 = kanal[i].treshold + 10;
+          kanal[i].adc_max = 0;
+          DBGserial.print( kanal[i].treshold );
+          DBGserial.print("  ");
+        }
+        DBGserial.println();
+      }
+    }
+    else {
+      store_maximum();
+    }  
   }
-#endif
 
   MIDI_Master.read();
   MIDI_Slave.read();  
@@ -114,20 +124,19 @@ void main_loop(){
       #define METRONOM_HARD 35
       #define METRONOM_SOFT 25
       old_metronom += cfg.metronom;
-      //adc_new_cycle = false; if (!stop_scan) while ( !adc_new_cycle ) ;
       if ( cfg.metronom_krat ) {
         if ( ++metronom_krat == cfg.metronom_krat ) { // сильная доля
           metronom_krat = 0;
-          MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS);      
+          MIDI_Master.sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS);      
           kanal[cfg.metronom_kanal].noteoff_time = millis() + METRONOM_HARD;
           RED_ON;
         } else { // слабые доли
-          MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal-1].note , cfg.metronom_volume, DRUMS);           
+          MIDI_Master.sendNoteOn( kanal[cfg.metronom_kanal-1].note , cfg.metronom_volume, DRUMS);           
           kanal[cfg.metronom_kanal-1].noteoff_time = millis() + METRONOM_SOFT;
           GREEN_ON;
         }
       } else {
-        MIDI_Master_sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS); 
+        MIDI_Master.sendNoteOn( kanal[cfg.metronom_kanal].note , cfg.metronom_volume, DRUMS); 
         kanal[cfg.metronom_kanal].noteoff_time = millis() + METRONOM_HARD;
         RED_ON;
       }    
@@ -135,27 +144,12 @@ void main_loop(){
   }
 }
 
-void set_autotreshold(){
-  DBGserial.print("Gather noise.. ");
-  delay (cfg.autotreshold_time);
-  for (byte i=0; i<NUM_CHANNELS; i++) {
-    kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;    
-    DBGserial.print( kanal[i].treshold );
-    DBGserial.print("  ");
-    kanal[i].adc_max = 0;
-  }
-  DBGserial.println();
-
-  show_buf_krutilka();
-
-  scan_autotreshold = false;
-}
-
 void loop() {
   scan_autotreshold = true;
-  setup_new_scan(); // запускаем опрос в работу
-  set_autotreshold(); // выставляем уровень шума
+  DBGserial.println("Gather noise.. ");
 
+  setup_new_scan(); // запускаем опрос в работу
+  
   //stop_scan = true; // ToDo debug
 
   while (1) main_loop();

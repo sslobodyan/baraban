@@ -1,6 +1,8 @@
 #include "sysex.h"
 
 #define MIDI_SPEED 115200
+//#define MIDI_SPEED 38400
+//#define MIDI_SPEED 31250
 
 // прописано в сэмплербоксе - не меняем
 #define CC_FOOT_PEDAL 64 // 0-63-127
@@ -148,7 +150,7 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
       MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
     }
 
-    MIDI_Master_sendNoteOn( kanal[ch].note , velocity, DRUMS);      
+    MIDI_Master.sendNoteOn( kanal[ch].note , velocity, DRUMS);      
     kanal[ch].noteoff_time = millis() + time_to_off;
     //digitalWrite(PC15, LOW);
   }
@@ -162,13 +164,11 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
     DBGserial.print( notes[idx].cross_cnt );    
     DBGserial.print("\tl ");    
     DBGserial.print( level );    
-    DBGserial.print("\tv ");    
+    DBGserial.print("\t\tv ");    
     DBGserial.print( velocity );    
     DBGserial.print(" ");    
     for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");
     DBGserial.print(" ");   
-    DBGserial.print( notes[idx].cross_cnt );    
-    DBGserial.print(" ");    
     for (byte i=0; i<NUM_CHANNELS; i++) {
       //DBGserial.print(kanal[i].pressed); DBGserial.print(",");
     }
@@ -184,7 +184,7 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
 
 void note_off(byte ch) {
   
-  MIDI_Master_sendNoteOff( kanal[ch].note , 0, DRUMS);
+  MIDI_Master.sendNoteOff( kanal[ch].note , 0, DRUMS);
 
   if (TEST_KANAL_RED == ch) {
     RED_OFF;

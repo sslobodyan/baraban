@@ -89,7 +89,7 @@ struct stChannel {
 } kanal[NUM_CHANNELS];
 
 struct stConfig {
-  uint32_t autotreshold_above = 50; // порог выше уровня шумов
+  uint32_t autotreshold_above = 10; // порог выше уровня шумов
   uint32_t noteoff_time0 = 500; // ms звучания ноты без педали
   uint32_t noteoff_time1 = 2500; // ms звучания ноты с полупедалью
   uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов 
@@ -108,11 +108,11 @@ struct stConfig {
   uint16_t velocity1 = 0;
   uint16_t velocity127 = 0;
   uint8_t volume=100;
-  uint8_t cross_cnt = 4; // сколько опросов АЦП ждать кросстолк 1==1.5ms  8=2.6ms 20=5мс
-  int16_t scan_cnt = 6; // количество полных сканирований АЦП после превышения трешолда
-  int16_t mute_cnt = 280; // количество полных сканирований АЦП для игнора успокаивающегося датчика
+  uint8_t cross_cnt = 6; // сколько опросов АЦП ждать кросстолк 1==1.5ms  8=2.6ms 20=5мс
+  int16_t scan_cnt = 12; // 6==800us количество полных сканирований АЦП после превышения трешолда
+  int16_t mute_cnt = 490; // количество полных сканирований АЦП для игнора успокаивающегося датчика
   uint32_t metronom = 500; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим
-  uint8_t metronom_volume = 50; // громкость метронома
+  uint8_t metronom_volume = 30; // громкость метронома
   uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
   uint8_t metronom_krat = 4; // кратность долей метронома
 } cfg;
