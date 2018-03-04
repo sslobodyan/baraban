@@ -119,7 +119,7 @@ void main_loop(){
     }
   }
 
-  if (cfg.metronom > 0) {
+  if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
     if ( millis() - old_metronom >= cfg.metronom ) {
       #define METRONOM_HARD 35
       #define METRONOM_SOFT 25
@@ -142,6 +142,7 @@ void main_loop(){
       }    
     }
   }
+  
 }
 
 void loop() {

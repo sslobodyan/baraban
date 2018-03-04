@@ -43,6 +43,12 @@
       темп
       громкость
       кратность
+0x0E_ Запросить параметры аналогового входа по номеру
+      0x0E
+      номер входа (127 - все)
+0x0F_ Запросить параметры крутилки по номеру
+      0x0E
+      номер крутилки (127 - все)
 
 ///////////////////////////////////////////////////////////////
 Отсылаемые команды:
@@ -53,13 +59,24 @@
       номер_входа 
       уровень старших 7 бит
       уровень младших 7 бит
-
 0x08_ Текущий уровень с крутилки-педали
       0x08
       номер_модуля
       номер_входа
       уровень крутилки
-
+0x10_ Возврат параметров аналогового входа
+      номер модуля, номер входа
+      порог старший, порог младший
+      номер ноты
+      velocity1 старший, velocity1 младший
+      velocity127 старший, velocity127 младший
+      группа
+0x11  Возврат параметров крутилки входа
+      номер модуля, номер входа
+      такущее АЦП, value
+      velocity1 старший, velocity1 младший
+      velocity127 старший, velocity127 младший
+      гистерезис
 //
 0xF0
 0x7D - non commercial
@@ -111,7 +128,7 @@ void send_sysex_krutilka_08(uint8_t idx) { // выслать состояние 
       номер_входа
       уровень крутилки
 */  
-  byte arr[]={SYSEX_ID, cfg.module, idx, krutilka[idx].value};
+  byte arr[]={SYSEX_ID, 0x08, cfg.module, idx, krutilka[idx].value};
   send_SysEx(sizeof(arr), arr);
 }
 
@@ -123,7 +140,7 @@ void send_sysex_kanal_07(uint8_t idx, uint16_t level) { // Текущий уро
       уровень старших 7 бит
       уровень младших 7 бит
 */  
-  byte arr[]={SYSEX_ID, cfg.module, idx, level >> 7, level & 0b01111111};
+  byte arr[]={SYSEX_ID, 0x07, cfg.module, idx, level >> 7, level & 0b01111111};
   send_SysEx(sizeof(arr), arr);
 }
 
@@ -167,7 +184,7 @@ void set_note_0C(byte * array, unsigned array_size) { // 0x0C Номер нот�
   if ( array[4] < NUM_CHANNELS ) kanal[ array[4] ].note = array[5];
 }
 
-void set_note_0D(byte * array, unsigned array_size) { // 0x0D_ Задать темп метронома в ударах в минуту, громкость и кратность
+void set_metronome_0D(byte * array, unsigned array_size) { // 0x0D_ Задать темп метронома в ударах в минуту, громкость и кратность
   if ( array[4] == 0 ) {
     cfg.metronom = 0;
     return;
@@ -176,6 +193,64 @@ void set_note_0D(byte * array, unsigned array_size) { // 0x0D_ Задать те
   cfg.metronom_volume = array[5] & 0x7F;
   cfg.metronom_krat = array[6] & 0x0F;
   metronom_krat = cfg.metronom_krat - 1; // начинаем всегда с сильной доли
+}
+
+void send_analog_params_10( byte idx ) {
+/*
+номер модуля, номер входа
+порог старший, порог младший
+номер ноты
+velocity1 старший, velocity1 младший
+velocity127 старший, velocity127 младший
+группа
+*/  
+  byte arr[]={SYSEX_ID, 0x10, 
+  cfg.module, idx, 
+  kanal[idx].treshold >> 7, kanal[idx].treshold & 0b01111111,
+  kanal[idx].note,
+  kanal[idx].velocity1 >> 7, kanal[idx].velocity1 & 0b01111111,
+  kanal[idx].velocity127 >> 7, kanal[idx].velocity127 & 0b01111111,
+  kanal[idx].group
+  };
+  send_SysEx(sizeof(arr), arr);  
+  delay(2);  // ToDo пока просто ждем время, но надо контролировать буфер передачи
+}
+
+void get_analog_params_0E(byte * array, unsigned array_size) { //  Запросить параметры аналогового входа по номеру
+  if ( array[4] == 0x7F ) {
+    for (byte i=0; i<NUM_CHANNELS; i++) {
+      send_analog_params_10( i );  
+    }
+  } else 
+  if ( array[4] < NUM_CHANNELS ) send_analog_params_10( array[4] );
+}
+
+void send_krutilka_params_11( byte idx ) {
+/*
+номер модуля, номер входа
+такущее АЦП, value
+velocity1 старший, velocity1 младший
+velocity127 старший, velocity127 младший
+гистерезис
+*/  
+  byte arr[]={SYSEX_ID, 0x11, 
+  cfg.module, idx, 
+  krutilka[idx].adc, krutilka[idx].value,
+  krutilka[idx].velocity1 >> 7, krutilka[idx].velocity1 & 0b01111111,
+  krutilka[idx].velocity127 >> 7, krutilka[idx].velocity127 & 0b01111111,
+  krutilka[idx].gist
+  };
+  send_SysEx(sizeof(arr), arr);  
+  delay(2);  // ToDo пока просто ждем время, но надо контролировать буфер передачи
+}
+
+void get_krutilka_params_0F(byte * array, unsigned array_size) { // Запросить параметры крутилки по номеру
+  if ( array[4] == 0x7F ) {
+    for (byte i=0; i<KRUTILKI_CNT; i++) {
+      send_krutilka_params_11( i );  
+    }
+  } else 
+  if ( array[4] < KRUTILKI_CNT ) send_krutilka_params_11( array[4] );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +269,9 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
     case 0x0A: set_cross_cnt_0A(array,array_size); break;
     case 0x0B: set_group_0B(array,array_size); break;
     case 0x0C: set_note_0C(array,array_size); break;
-    case 0x0D: set_note_0D(array,array_size); break;
+    case 0x0D: set_metronome_0D(array,array_size); break;
+    case 0x0E: get_analog_params_0E(array,array_size); break; //  Запросить параметры аналогового входа по номеру
+    case 0x0F: get_krutilka_params_0F(array,array_size); break; // Запросить параметры крутилки по номеру
     default : 
       DBGserial.print("SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
       break;

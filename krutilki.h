@@ -1,11 +1,10 @@
 
 void update_krutilki() { // обработать одну krutilka_idx-крутилку
-  uint32_t tmp;
   uint8_t old_value, new_value;
   
   old_value = krutilka[ krutilka_idx ].value;
-  tmp = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
-  new_value = map(tmp, krutilka[krutilka_idx].velocity1, krutilka[krutilka_idx].velocity127,  1, 127);
+  krutilka[ krutilka_idx ].adc = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
+  new_value = map(krutilka[ krutilka_idx ].adc, krutilka[krutilka_idx].velocity1, krutilka[krutilka_idx].velocity127,  1, 127);
   if (new_value < 1) new_value = 1;
   if (new_value > 126) new_value = 127;
 
@@ -161,6 +160,13 @@ void setPotVolume( uint8_t value ) {
   } 
 }
 
+void setPotVolumeMetronome( uint8_t value ) {
+  if ( value != cfg.metronom_volume ) {
+    cfg.metronom_volume = value;
+    DBGserial.print("Metronome Volume=");DBGserial.println( cfg.metronom_volume ); // ToDo Debug
+  } 
+}
+
 void set_handl(uint8_t tp) { // назначаем глобальной переменной обработчик крутилки
   switch ( tp ) {
     case PEDAL_SUSTAIN: handl = setPedalSustain; break;
@@ -173,6 +179,7 @@ void set_handl(uint8_t tp) { // назначаем глобальной пере
     case POT_LENGTH0: handl = setPotLength0; break;
     case POT_LENGTH1: handl = setPotLength1; break;
     case POT_VOLUME: handl = setPotVolume; break;
+    case POT_VOLUME_METRONOM: handl = setPotVolumeMetronome; break;
     deafult: handl = NULL ;
   }
 }

@@ -195,7 +195,7 @@ void note_off(byte ch) {
 }
 
 void send_SysEx(byte size, byte *arr) { // выслать системное сообщение 
-  MIDI_Master.sendSysEx(sizeof(arr), arr, false);
+  MIDI_Master.sendSysEx(size, arr, false);
 }
 
   
