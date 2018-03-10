@@ -17,6 +17,9 @@
 #define CC_SHIFT_OCTAVE 70 // ==64 - не сдвигать
 #define CC_VELOCITY1 71 // 
 #define CC_VELOCITY127 72 // 
+#define CC_MUTE_CNT 73 // 
+#define CC_SCAN_CNT 74 // 
+#define CC_CROSS_CNT 75 // 
 
 
 struct MySettings : public midi::DefaultSettings
@@ -43,6 +46,12 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
       case CC_VELOCITY1: cfg.velocity1 = value * 8;
                       break;
       case CC_VELOCITY127: cfg.velocity127 = value * 8;
+                      break;
+      case CC_SCAN_CNT: cfg.scan_cnt = value;
+                      break;
+      case CC_CROSS_CNT: cfg.cross_cnt = value;
+                      break;
+      case CC_MUTE_CNT: cfg.mute_cnt = value * 4;
                       break;
       default: break;
     }
@@ -162,9 +171,15 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
     DBGserial.print( ch );
     DBGserial.print("\tc ");    
     DBGserial.print( notes[idx].cross_cnt );    
-    DBGserial.print("\tl ");    
+    DBGserial.print("\tlv ");    
+    if (level < 10) DBGserial.print(" ");
+    if (level < 100) DBGserial.print(" ");
+    if (level < 1000) DBGserial.print(" ");
     DBGserial.print( level );    
     DBGserial.print("\t\tv ");    
+    if (velocity < 10) DBGserial.print(" ");
+    if (velocity < 100) DBGserial.print(" ");
+    if (velocity < 1000) DBGserial.print(" ");
     DBGserial.print( velocity );    
     DBGserial.print(" ");    
     for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");

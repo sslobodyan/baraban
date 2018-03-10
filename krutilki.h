@@ -29,6 +29,32 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
 // Должны на входе получить новое значение крутилки и выполнить с ним действие
 //
 //////////////////////////////////////////////////////////////////////////
+void setPotMuteCnt( uint8_t value ) { 
+  byte old = cfg.mute_cnt;
+  cfg.mute_cnt = value * 4;
+  if ( old != cfg.mute_cnt ) {
+    MIDI_Master.sendControlChange( CC_MUTE_CNT, value, DRUMS );
+    DBGserial.print("MuteCnt=");DBGserial.println( cfg.mute_cnt ); // ToDo Debug
+  }
+}
+
+void setPotScanCnt( uint8_t value ) { 
+  byte old = cfg.scan_cnt;
+  cfg.scan_cnt = value;
+  if ( old != cfg.scan_cnt ) {
+    MIDI_Master.sendControlChange( CC_SCAN_CNT, value, DRUMS );
+    DBGserial.print("ScanCnt=");DBGserial.println( cfg.scan_cnt ); // ToDo Debug
+  }
+}
+
+void setPotCrossCnt( uint8_t value ) { 
+  byte old = cfg.cross_cnt;
+  cfg.cross_cnt = value;
+  if ( old != cfg.cross_cnt ) {
+    MIDI_Master.sendControlChange( CC_CROSS_CNT, value, DRUMS );
+    DBGserial.print("CrossCnt=");DBGserial.println( cfg.cross_cnt ); // ToDo Debug
+  }
+}
 
 void setPotLength0( uint8_t value ) { // обработчик 0 крутилки - время звучания ноты без педали
   byte old = cfg.noteoff_time0;

@@ -22,8 +22,13 @@ void setup() {
   pinMode(LED, OUTPUT);
   LED_OFF;
   pinMode(GREEN_LED, OUTPUT);
-  GREEN_OFF;
   pinMode(RED_LED, OUTPUT);
+  GREEN_ON;
+  RED_ON;
+
+  delay(100);
+
+  GREEN_OFF;
   RED_OFF;
 
   setup_module();
@@ -32,10 +37,14 @@ void setup() {
   setup_kanal();
   setup_krutilki();
   midiSetup();
+
+/*  
   DBGserial.print(" Search MPRs... ");
   DBGserial.print( setup_mpr() );
   DBGserial.println();
+  
   setup_touch(); // распределение датчиков касания по каналах
+*/  
 
 }
 
@@ -80,10 +89,13 @@ void main_loop(){
         scan_autotreshold = false;
         for (byte i=0; i<NUM_CHANNELS; i++) {
           kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
-          kanal[i].velocity1 = kanal[i].treshold + 10;
+          kanal[i].velocity1 = kanal[i].treshold + 50;
+          if (i % 4 == 0) DBGserial.println();
+          DBGserial.print("("); DBGserial.print( i ); DBGserial.print(")");
+          DBGserial.print("m="); DBGserial.print( kanal[i].adc_max ); 
+          DBGserial.print(",t="); DBGserial.print( kanal[i].treshold );
+          DBGserial.print("\t");
           kanal[i].adc_max = 0;
-          DBGserial.print( kanal[i].treshold );
-          DBGserial.print("  ");
         }
         DBGserial.println();
       }

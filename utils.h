@@ -35,7 +35,7 @@ void setup_kanal() {
   for (byte i=0; i<NUM_CHANNELS; i++) {
     kanal[i].treshold = 0xFFFF;
     kanal[i].velocity1 = 300;
-    kanal[i].velocity127 = 1300;
+    kanal[i].velocity127 = 1950;
     kanal[i].scan_cnt = -1;
     kanal[i].group = 1;
   }
@@ -127,13 +127,14 @@ byte idx_note=0;
     #ifdef SHOW_GROUPS_HIDE
       DBGserial.println(); DBGserial.print("max ");DBGserial.println( notes[max_idx].kanal );
     #endif  
-    // глушим все более слабые сигналы
+    // глушим все более слабые сигналы в той же группе
     idx_note = tail_notes;
     while ( idx_note != head_notes) {
       if ( ++idx_note >= NOTES_CNT) idx_note=0;
-      if ( idx_note != max_idx ) {
+      if (( idx_note != max_idx ) && (group == notes[ idx_note ].group)) {
         notes[idx_note].level = 0;
         kanal[ notes[idx_note].kanal ].scan_cnt = cfg.scan_cnt+1; // mute fantom channel
+        kanal[ notes[idx_note].kanal ].adc_max = 0;
         #ifdef SHOW_GROUPS_HIDE
           DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
         #endif  
@@ -145,33 +146,4 @@ byte idx_note=0;
     return true; // можно играть  
 }
 
-
-
-#include "libmaple/usart.h"
-void putc_serial3( uint8_t ch ) {
-  // отключить прерывание по ТХ, блокирующе передать байт
-  while(!(USART3->regs->SR & USART_SR_TXE))
-    ;
-  USART3->regs->DR = (uint8)ch;
-  while(!(USART3->regs->SR & USART_SR_TXE))
-    ; 
-}
-
-void MIDI_Master_sendNoteOn( byte note , byte vel, byte chan){
-  putc_serial3( 0x90 - 1 + ( chan & 0x0F ) );
-  putc_serial3( note & 0x7F );
-  putc_serial3( vel  & 0x7F );
-}
-
-void MIDI_Master_sendNoteOff( byte note , byte vel, byte chan){
-  putc_serial3( 0x80 - 1 + ( chan & 0x0F) );
-  putc_serial3( note & 0x7F );
-  putc_serial3( vel  & 0x7F );
-}
-
-void MIDI_Master_sendControlChange( byte note , byte vel, byte chan) {
-  putc_serial3( 0xB0 - 1 + ( chan & 0x0F ) );
-  putc_serial3( note & 0x7F );
-  putc_serial3( vel  & 0x7F );  
-}
 
