@@ -58,6 +58,7 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 #define POT_MUTE_CNT 121    // 0x79
 #define POT_SCAN_CNT 122    // 0x7A
 #define POT_CROSS_CNT 123    // 0x7B
+#define POT_CROSS_PRCNT 124    // 0x7C
 
 #define PEDAL_SUSTAIN 114 // 0x72
 #define PEDAL_VOICE 115   // 0x73
@@ -118,6 +119,7 @@ struct stConfig {
   uint8_t metronom_volume = 30; // громкость метронома
   uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
   uint8_t metronom_krat = 4; // кратность долей метронома
+  uint8_t cross_percent = 30; // подавлять кросстолк до указанного уровня в процентах от самого сильного сигнала
 } cfg;
 
 #define NOTES_CNT 10 // длина буфера нажатых нот 

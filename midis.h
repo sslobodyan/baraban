@@ -20,6 +20,7 @@
 #define CC_MUTE_CNT 73 // 
 #define CC_SCAN_CNT 74 // 
 #define CC_CROSS_CNT 75 // 
+#define CC_CROSS_PRCNT 76 //
 
 
 struct MySettings : public midi::DefaultSettings
@@ -53,6 +54,8 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
                       break;
       case CC_MUTE_CNT: cfg.mute_cnt = value * 4;
                       break;
+      case CC_CROSS_PRCNT: cfg.cross_percent = value;
+                      break;                  
       default: break;
     }
 }

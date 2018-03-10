@@ -127,17 +127,20 @@ byte idx_note=0;
     #ifdef SHOW_GROUPS_HIDE
       DBGserial.println(); DBGserial.print("max ");DBGserial.println( notes[max_idx].kanal );
     #endif  
-    // глушим все более слабые сигналы в той же группе
+    // глушим все более слабые сигналы в той же группе, не превышающие процент
+    uint16_t percent = max_level * cfg.cross_percent / 100;
     idx_note = tail_notes;
     while ( idx_note != head_notes) {
       if ( ++idx_note >= NOTES_CNT) idx_note=0;
       if (( idx_note != max_idx ) && (group == notes[ idx_note ].group)) {
-        notes[idx_note].level = 0;
-        kanal[ notes[idx_note].kanal ].scan_cnt = cfg.scan_cnt+1; // mute fantom channel
-        kanal[ notes[idx_note].kanal ].adc_max = 0;
-        #ifdef SHOW_GROUPS_HIDE
-          DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
-        #endif  
+        if ( notes[idx_note].level < percent ) {
+          notes[idx_note].level = 0;
+          kanal[ notes[idx_note].kanal ].scan_cnt = cfg.scan_cnt+1; // mute fantom channel
+          kanal[ notes[idx_note].kanal ].adc_max = 0;
+          #ifdef SHOW_GROUPS_HIDE
+            DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
+          #endif            
+        }
       }
     }
     #ifdef SHOW_GROUPS_HIDE

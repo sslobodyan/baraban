@@ -29,6 +29,15 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
 // Должны на входе получить новое значение крутилки и выполнить с ним действие
 //
 //////////////////////////////////////////////////////////////////////////
+void setPotCrossPercent( uint8_t value ) { 
+  if ( value != cfg.cross_percent ) {
+    cfg.cross_percent = value;
+    MIDI_Master.sendControlChange( CC_CROSS_PRCNT, value, DRUMS );
+    DBGserial.print("CrossPercent=");DBGserial.println( value ); // ToDo Debug
+  }
+}
+
+
 void setPotMuteCnt( uint8_t value ) { 
   byte old = cfg.mute_cnt;
   cfg.mute_cnt = value * 4;
@@ -206,6 +215,7 @@ void set_handl(uint8_t tp) { // назначаем глобальной пере
     case POT_LENGTH1: handl = setPotLength1; break;
     case POT_VOLUME: handl = setPotVolume; break;
     case POT_VOLUME_METRONOM: handl = setPotVolumeMetronome; break;
+    case POT_CROSS_PRCNT: handl = setPotCrossPercent; break;
     deafult: handl = NULL ;
   }
 }
