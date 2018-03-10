@@ -143,14 +143,6 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
   if (velocity > 126) velocity=127;
   if (velocity < 1) velocity=0;
 
-  if (TEST_KANAL_RED == ch) {
-    RED_ON;
-  }
-
-  if (TEST_KANAL_GREEN == ch) {
-    GREEN_ON;
-  }
-
   if (velocity == 0) { // прижали палочку - глушим ранее играющую ноту
     note_off( ch );
     return false;
@@ -200,16 +192,8 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
   
 }
 
-void note_off(byte ch) {
-  
+void note_off(byte ch) { 
   MIDI_Master.sendNoteOff( kanal[ch].note , 0, DRUMS);
-
-  if (TEST_KANAL_RED == ch) {
-    RED_OFF;
-  }
-  if (TEST_KANAL_GREEN == ch) {
-    GREEN_OFF;
-  }
 }
 
 void send_SysEx(byte size, byte *arr) { // выслать системное сообщение 

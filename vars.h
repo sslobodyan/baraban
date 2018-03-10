@@ -29,9 +29,6 @@
 #define RED_OFF digitalWrite(RED_LED, LOW)
 #define RED_TOGGLE digitalWrite(RED_LED,!digitalRead(RED_LED))
 
-#define TEST_KANAL_GREEN 30
-#define TEST_KANAL_RED 31
-
 #define MODULE_72 72
 #define MODULE_60 60
 #define MODULE_48 48
@@ -120,6 +117,7 @@ struct stConfig {
   uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
   uint8_t metronom_krat = 4; // кратность долей метронома
   uint8_t cross_percent = 30; // подавлять кросстолк до указанного уровня в процентах от самого сильного сигнала
+  uint16_t max_level = 1800; // уровень сигнала, когда включаем красный светодиод
 } cfg;
 
 #define NOTES_CNT 10 // длина буфера нажатых нот 
@@ -163,7 +161,7 @@ uint32_t old_metronom = 0; // время удара метронома
 uint8_t metronom_krat = cfg.metronom_krat-1; // кратность метронома
 volatile bool adc_new_cycle; // выставляется в прерывании при включении 0 мультиплексора (новый цикд)
 
-uint32_t tm_time;
+uint32_t tm_time, time_green, time_red;
 
 
 /////////////////////////  Объявления функций //////////////////////////////////////

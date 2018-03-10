@@ -153,6 +153,15 @@ void main_loop(){
         RED_ON;
       }    
     }
+  } else { // без метронома светики показывают силу удара
+    if ((time_green > 0) && (millis() > time_green)) { // тушим светодиод удара
+      GREEN_OFF;
+      time_green = 0;
+    }
+    if ((time_red > 0) && (millis() > time_red)) { // тушим светодиод переусиления
+      RED_OFF;
+      time_red = 0;
+    }    
   }
   
 }
