@@ -54,16 +54,32 @@ void setup_module() { // по перемычкам определить тип �
   if ( digitalRead(SELECT_MODULE1) ) {
     if ( digitalRead(SELECT_MODULE2) ) {
       cfg.module = MODULE_72;
+      cfg.start_note = MODULE_72; 
+      cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
+      DBGserial.println( "Module_72" );
     } else {
       cfg.module = MODULE_60;
+      cfg.start_note = MODULE_60; 
+      cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
+      DBGserial.println( "Module_60" );
     }
   } else {
     if ( digitalRead(SELECT_MODULE2) ) {
       cfg.module = MODULE_48;
+      cfg.start_note = MODULE_48; 
+      cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
+      DBGserial.println( "Module_48" );
     } else {
       cfg.module = MODULE_36;
+      cfg.start_note = MODULE_36; 
+      cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
+      DBGserial.println( "Module_36" );
     }    
   }
+  DBGserial.print( "Start Note " );
+  DBGserial.print(cfg.start_note);
+  DBGserial.print( "   End Note " );
+  DBGserial.println(cfg.end_note);
 }
 
 void show_buf_krutilka() {

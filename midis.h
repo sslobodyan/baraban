@@ -21,6 +21,7 @@
 #define CC_SCAN_CNT 74 // 
 #define CC_CROSS_CNT 75 // 
 #define CC_CROSS_PRCNT 76 //
+#define CC_METRONOM 77 //
 
 
 struct MySettings : public midi::DefaultSettings
@@ -55,7 +56,9 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
       case CC_MUTE_CNT: cfg.mute_cnt = value * 4;
                       break;
       case CC_CROSS_PRCNT: cfg.cross_percent = value;
-                      break;                  
+                      break;     
+      case CC_METRONOM: cfg.metronom = 60000 / value / 2;
+                      break;                                        
       default: break;
     }
 }

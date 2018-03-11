@@ -56,6 +56,7 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 #define POT_SCAN_CNT 122    // 0x7A
 #define POT_CROSS_CNT 123    // 0x7B
 #define POT_CROSS_PRCNT 124    // 0x7C
+#define POT_METRONOM 125    // 0x7D
 
 #define PEDAL_SUSTAIN 114 // 0x72
 #define PEDAL_VOICE 115   // 0x73
