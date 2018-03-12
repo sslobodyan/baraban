@@ -38,6 +38,9 @@ void setup() {
   setup_krutilki();
   midiSetup();
 
+  multi_krutilka_idx = 0;
+  multi_idx = 0;
+
 /*  
   DBGserial.print(" Search MPRs... ");
   DBGserial.print( setup_mpr() );
@@ -80,6 +83,8 @@ void setup_module() { // по перемычкам определить тип �
   DBGserial.print(cfg.start_note);
   DBGserial.print( "   End Note " );
   DBGserial.println(cfg.end_note);
+  DBGserial.println();
+  delay(30);
 }
 
 void show_buf_krutilka() {
@@ -107,13 +112,29 @@ void main_loop(){
           kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
           kanal[i].velocity1 = kanal[i].treshold + 50;
           if (i % 4 == 0) DBGserial.println();
-          DBGserial.print("("); DBGserial.print( i ); DBGserial.print(")");
-          DBGserial.print("m="); DBGserial.print( kanal[i].adc_max ); 
-          DBGserial.print(",t="); DBGserial.print( kanal[i].treshold );
+          DBGserial.print("("); 
+          if (i < 10) DBGserial.print(" ");          
+          DBGserial.print( i ); 
+          DBGserial.print("/"); 
+          if (kanal[i].note < 10) DBGserial.print(" ");
+          if (kanal[i].note < 100) DBGserial.print(" ");
+          DBGserial.print( kanal[i].note ); 
+          DBGserial.print(")");
+          DBGserial.print("n="); 
+          if (kanal[i].adc_max < 10) DBGserial.print(" ");
+          if (kanal[i].adc_max < 100) DBGserial.print(" ");          
+          if (kanal[i].adc_max < 1000) DBGserial.print(" ");          
+          DBGserial.print( kanal[i].adc_max ); 
+          DBGserial.print(",t="); 
+          if (kanal[i].treshold < 10) DBGserial.print(" ");
+          if (kanal[i].treshold < 100) DBGserial.print(" ");          
+          if (kanal[i].treshold < 1000) DBGserial.print(" ");          
+          DBGserial.print( kanal[i].treshold );
           DBGserial.print("\t");
           kanal[i].adc_max = 0;
         }
         DBGserial.println();
+        show_krutilki_adc();
       }
     }
     else {
@@ -143,6 +164,17 @@ void main_loop(){
       if (kanal[i].noteoff_time < millis() ) {
         note_off(i);
         kanal[i].noteoff_time = 0;
+        // гасим метроном
+        if ( i == NUM_CHANNELS-1 ) {
+          if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
+            RED_OFF;  
+          }
+        }
+        if ( i == NUM_CHANNELS-2 ) {
+          if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
+            GREEN_OFF;  
+          }
+        }
       }
     }
   }
@@ -179,6 +211,9 @@ void main_loop(){
       time_red = 0;
     }    
   }
+  
+  //show_krutilki();
+  //show_krutilki_buf();
   
 }
 

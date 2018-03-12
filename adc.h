@@ -50,31 +50,40 @@ static bool bit_c;
 void  next_multiplexor(){ // выбрать следующий мультиплексор
   last_milti_idx = multi_idx; // запоминаем какой мультиплексор просканировали
 
+  if (++multi_krutilka_idx >= KRUTILKI_CNT/2) {
+    multi_krutilka_idx = 0;
+  }
+  bit_c = !(multi_krutilka_idx & 4);
+  
   if (++multi_idx >= NUM_MULTIPLEXORS) {
     multi_idx = 0; // новый проход по всем мультиплексорам
     last_buf_idx = buf_idx; // запоминаем куда последние измерения сканировали
-    bit_c = !bit_c;
     if (++buf_idx >= BUFFER_CNT) {
       buf_idx=0;
     }
   }
   
-  multi_krutilka_idx = multi_idx * 2 + bit_c;
+  //multi_krutilka_idx = multi_idx * 2 + bit_c;
   
   switch (multi_idx) {
     case 0:
       // gpio_write_bit(GPIOB, 0, LOW);
       digitalWrite(MX_A001, 0);
       digitalWrite(MX_A010, 0);
-      digitalWrite(MX_A100, bit_c); 
       break;
     case 1:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 0); digitalWrite(MX_A100, bit_c); break;
+      digitalWrite(MX_A001, 1); 
+      digitalWrite(MX_A010, 0); 
+      break;
     case 2:
-      digitalWrite(MX_A001, 0); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, bit_c); break;
+      digitalWrite(MX_A001, 0); 
+      digitalWrite(MX_A010, 1); 
+      break;
     default:
-      digitalWrite(MX_A001, 1); digitalWrite(MX_A010, 1); digitalWrite(MX_A100, bit_c);     
+      digitalWrite(MX_A001, 1); 
+      digitalWrite(MX_A010, 1); 
   }
+  digitalWrite(MX_A100, bit_c); 
 }
 
 void setup_new_scan() {
@@ -82,7 +91,8 @@ void setup_new_scan() {
   DMA1->regs->CNDTR1 = NUM_ADC*2; // повторно количество транзакций
   
   dma_enable(DMA1, DMA_CH1); // Enable the channel   
-  ADC1->regs->CR2 |= ADC_CR2_SWSTART; // запускаем регулярное преобразование АЦП
+  ADC1->regs->CR2 |= ADC_CR2_SWSTART; // запускаем регулярное преобразование АЦП1
+  ADC2->regs->CR2 |= ADC_CR2_JSWSTART; //запустить процес преобразования АЦП2
 }
  
 static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили сбор - буфер одного мультиплексора (8 входов) заполнен 
@@ -90,22 +100,17 @@ static void DMA1_CH1_Event() { // ПРЕРЫВАНИЕ ДМА закончили
   
   dma_disable(DMA1, DMA_CH1); 
 
-  // состояние 0 и 9 каналов по АЦП2 запоминаем до смены мультиплексора!
-  buf_krutilka[ multi_krutilka_idx  ][0] = ADC2->regs->JDR1; //
-  buf_krutilka[ multi_krutilka_idx  ][1] = ADC2->regs->JDR3; //
+  // состояние 8 и 9 каналов по АЦП2 запоминаем до смены мультиплексора!
+  if ( ADC2->regs->SR & ADC_SR_JEOC ){ // прошло преобразование инжектированной группы 
+    buf_krutilka[ multi_krutilka_idx  ][0] = ADC2->regs->JDR1; // 1-3
+    buf_krutilka[ multi_krutilka_idx  ][1] = ADC2->regs->JDR3; // 
+    ADC2->regs->SR &= ~ADC_SR_JEOC;
+  }
 
   next_multiplexor();
 
   if (multi_idx == 0) { // прошли по всем 4 мультиплексорам - отсканированы все 32 датчика
     adc_dma_cnt++;
-/*    
-    if ( scan_autotreshold ) {
-      store_autotreshold();
-    }
-    else {
-      store_maximum();
-    }  
-*/    
     adc_new_cycle = true;
   }
 
@@ -150,13 +155,15 @@ void setup_ADC() {
   last_buf_idx, buf_idx = 0;
   adc_set_prescaler(ADC_PRE_PCLK2_DIV_6); // 12 МГц тактовая АЦП (максимум 14)
   adc_set_sample_rate(ADC1, ADC_SMPR_7_5); // 7.5+12.5 = 20 такта на выборку 1/12*20=1.667мкс выборка 1.5 7.5 13.5 28.5 41.5 55.5 71.5 239.5
-  adc_set_sample_rate(ADC2, ADC_SMPR_7_5); // 
+  adc_set_sample_rate(ADC2, ADC_SMPR_28_5); // 
   // для 1.5 один опрос сенсоров 14 тактов 19мкс ==1          t=124 us 32 ch
   // для 7.5 один опрос сенсоров 20 тактов 27мкс ==1 129us     t=155 us 32 канала
   // для 13.5 один опрос сенсоров 26 тактов 35мкс ==1 155us 32ch
   // для 28.5 один опрос сенсоров 41 тактов 55мкс 1/12000000*41*16 228us 32ch
   // для 41.5 один опрос сенсоров 54 тактов 73мкс 300us 32ch
   // для 55.5 один опрос сенсоров 68 тактов 91мкс 380us
+  // 71.5
+  // 239.5
   // минимально 28,5 тактов иначе тянет хвост сигнала на следующий канал
   
   adc_calibrate(ADC1);
@@ -174,14 +181,14 @@ void setup_ADC() {
   ADC2->regs->CR2    |=  ADC_CR2_JEXTTRIG;     //разр. внешний запуск инжектированной группы
   ADC2->regs->CR1    |=  ADC_CR1_SCAN;         //режим сканирования (т.е. несколько каналов)
   ADC2->regs->CR1    |=  ADC_CR1_JAUTO;        //автомат. запуск инжектированной группы
-  ADC2->regs->CR2    |=  ADC_CR2_CONT;         //режим непрерывного преобразования 
+  //ADC2->regs->CR2    |=  ADC_CR2_CONT;         //режим непрерывного преобразования 
   ADC2->regs->JSQR    =  (uint32_t)(4-1)<<20;  //задаем количество каналов в инжектированной группе
-  ADC2->regs->JSQR   |=  (uint32_t)0<<(5*0);   //номер канала для первого преобразования             
-  ADC2->regs->JSQR   |=  (uint32_t)0<<(5*1);   //номер канала для первого преобразования             
-  ADC2->regs->JSQR   |=  (uint32_t)9<<(5*2);   //номер канала для второго преобразования
-  ADC2->regs->JSQR   |=  (uint32_t)9<<(5*3);   //номер канала для первого преобразования             
+  ADC2->regs->JSQR   |=  (uint32_t)9<<(5*0);   //разряд на землю
+  ADC2->regs->JSQR   |=  (uint32_t)14<<(5*1);   //номер канала для второго преобразования             
+  ADC2->regs->JSQR   |=  (uint32_t)8<<(5*2);   //разряд на землю
+  ADC2->regs->JSQR   |=  (uint32_t)14<<(5*3);   //номер канала для первого преобразования    
   ADC2->regs->CR2    |=  ADC_CR2_ADON;         //включить АЦП
-  ADC2->regs->CR2    |=  ADC_CR2_JSWSTART;     //запустить процес преобразования
+  //ADC2->regs->CR2    |=  ADC_CR2_JSWSTART;     //запустить процес преобразования
 }
 
 // calculate values for SQR3. Function could be extended to also work for SQR2 and SQR1. As is, you can sequence only 6 sequences per ADC

@@ -189,7 +189,7 @@ void set_metronome_0D(byte * array, unsigned array_size) { // 0x0D_ Задать
     cfg.metronom = 0;
     return;
   }
-  cfg.metronom = (uint32_t) 60 * 1000 / array[4];
+  cfg.metronom = (uint32_t) 60000 / array[4];
   cfg.metronom_volume = array[5] & 0x7F;
   cfg.metronom_krat = array[6] & 0x0F;
   metronom_krat = cfg.metronom_krat - 1; // начинаем всегда с сильной доли

@@ -35,9 +35,9 @@
 #define MODULE_36 36
 
 #define GND_SENSOR 15
-uint8_t ADC_1Sequence[4]={GND_SENSOR,7,GND_SENSOR,8};   
-uint8_t ADC_2Sequence[6]={GND_SENSOR,4,GND_SENSOR,5,GND_SENSOR,6};   
-uint8_t ADC_3Sequence[6]={GND_SENSOR,1,GND_SENSOR,2,GND_SENSOR,3};   // входы с 1 - см схему, 0-контрольный, 9-земля
+uint8_t ADC_1Sequence[4]={GND_SENSOR,6,GND_SENSOR,7};   
+uint8_t ADC_2Sequence[6]={GND_SENSOR,3,GND_SENSOR,4,GND_SENSOR,5};   
+uint8_t ADC_3Sequence[6]={GND_SENSOR,0,GND_SENSOR,1,GND_SENSOR,2};   // входы с 1 - см схему, 0-контрольный, 9-земля
 
 #define BUFFER_CNT 10
 volatile byte last_buf_idx, buf_idx; // BUFFER_CNT буферов - пока один обрабатываем, во второй сканируются входы
@@ -69,6 +69,8 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 #define PEDAL_CENTER 64
 #define PEDAL_UP 0
 
+#define METRONOME_MIN 40 // минимум BPS
+#define METRONOME_MAX 210 // максимально BPS
 
 volatile int multi_idx; // номер включенного мультиплексора
 volatile int last_milti_idx; // номер предыдущего (только что считанного) мультиплексора
@@ -113,7 +115,7 @@ struct stConfig {
   uint8_t cross_cnt = 6; // сколько опросов АЦП ждать кросстолк (1 опрос 133 мкс)
   int16_t scan_cnt = 12; // 6==800us количество полных сканирований АЦП после превышения трешолда
   int16_t mute_cnt = 560; // количество полных сканирований АЦП для игнора успокаивающегося датчика
-  uint32_t metronom = 00; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим
+  uint32_t metronom = 500; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим
   uint8_t metronom_volume = 30; // громкость метронома
   uint8_t metronom_kanal = NUM_CHANNELS-1; // канал метронома
   uint8_t metronom_krat = 4; // кратность долей метронома
@@ -132,7 +134,7 @@ struct stNotes {
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
 
-#define KRUTILKI_CNT 16 // максимальное число крутилок на одном канале мх
+#define KRUTILKI_CNT 16 // максимальное число крутилок
 struct stKrutilka {
   uint16_t velocity1; // АЦП для 1
   uint16_t velocity127; // АЦП для 127
@@ -145,9 +147,10 @@ struct stKrutilka {
   uint8_t show; // (0-молчать,1-вывод текущего уровня)
   uint16_t adc; // текущее значение по АЦП
 } krutilka[ KRUTILKI_CNT ];
+
 uint8_t krutilka_idx; // текущая обрабатываемая крутилка
 uint8_t multi_krutilka_idx; // индекс канала мультиплексора крутилок
-volatile uint16_t buf_krutilka[ KRUTILKI_CNT ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
+volatile uint16_t buf_krutilka[ KRUTILKI_CNT/2 ][2]; // буфер всех сканирований АЦП2 канал 0, канал 9
 
 
 void (*handl)(uint8_t tp); // глобальная переменная с адресом обработчика крутилки
@@ -176,4 +179,7 @@ void krutilka_set_type(uint8_t idx, uint8_t tp);
 void note_off(byte ch);
 void send_SysEx(byte size, byte *arr);
 bool check_groups();
+void show_krutilki_adc();
+void show_krutilki();
+void show_krutilki_buf();
 

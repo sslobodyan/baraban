@@ -57,7 +57,7 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
                       break;
       case CC_CROSS_PRCNT: cfg.cross_percent = value;
                       break;     
-      case CC_METRONOM: cfg.metronom = 60000 / value / 2;
+      case CC_METRONOM: cfg.metronom = 60000 / map(value, 0, 127, METRONOME_MIN, METRONOME_MAX) ;
                       break;                                        
       default: break;
     }

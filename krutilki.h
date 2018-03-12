@@ -1,15 +1,15 @@
 
 void update_krutilki() { // обработать одну krutilka_idx-крутилку
-  uint8_t old_value, new_value;
+  int16_t old_value, new_value;
   
-  old_value = krutilka[ krutilka_idx ].value;
-  krutilka[ krutilka_idx ].adc = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
-  new_value = map(krutilka[ krutilka_idx ].adc, krutilka[krutilka_idx].velocity1, krutilka[krutilka_idx].velocity127,  1, 127);
-  if (new_value < 1) new_value = 1;
-  if (new_value > 126) new_value = 127;
+  old_value = krutilka[ krutilka_idx ].adc;
+  new_value = buf_krutilka[ krutilka[krutilka_idx].mx ][ krutilka[krutilka_idx].ch ];
 
-  if ( abs(new_value - old_value) >= krutilka[ krutilka_idx ].gist ) {
-    // существенное изменение положения
+  if ( abs(new_value - old_value) >= krutilka[ krutilka_idx ].gist ) { // существенное изменение положения
+    krutilka[ krutilka_idx ].adc = new_value;
+    new_value = map(krutilka[ krutilka_idx ].adc, krutilka[krutilka_idx].velocity1, krutilka[krutilka_idx].velocity127,  1, 127);
+    if (new_value < 0) new_value = 0;
+    if (new_value > 126) new_value = 127;
     krutilka[ krutilka_idx ].value = new_value;
     // если есть обработчик, то выполнить его
     if ( krutilka[ krutilka_idx ].onChange != NULL ) {
@@ -18,6 +18,10 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     // если запросили вывод SysEx о состоянии крутилок
     if ( krutilka[ krutilka_idx ].show ) {
       send_sysex_krutilka_08( krutilka_idx );
+      DBGserial.print("Kr_");
+      DBGserial.print(krutilka_idx);
+      DBGserial.print("=");
+      DBGserial.println(new_value);
     }
   }
   if ( ++krutilka_idx >= KRUTILKI_CNT ) krutilka_idx = 0;
@@ -31,10 +35,15 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
 //////////////////////////////////////////////////////////////////////////
 void setPotMetronom( uint8_t value ) { 
   uint16_t old = cfg.metronom;
-  cfg.metronom = 60000 / value / 2;
+  int32_t tempo = map(value, 0, 127, METRONOME_MIN, METRONOME_MAX);
+  cfg.metronom = (int32_t) 60000 / tempo ;
   if ( value != cfg.metronom ) {
     MIDI_Master.sendControlChange( CC_METRONOM, value, DRUMS );
-    DBGserial.print("Metronom=");DBGserial.println( value ); // ToDo Debug
+    DBGserial.print("Metronome ");
+    DBGserial.print( value ); 
+    DBGserial.print(" ="); 
+    DBGserial.println( tempo ); 
+    // ToDo Debug
   }
 }
 
@@ -204,6 +213,7 @@ void setPotVolume( uint8_t value ) {
 }
 
 void setPotVolumeMetronome( uint8_t value ) {
+  if (value < 5) value = 0;
   if ( value != cfg.metronom_volume ) {
     cfg.metronom_volume = value;
     DBGserial.print("Metronome Volume=");DBGserial.println( cfg.metronom_volume ); // ToDo Debug
@@ -243,17 +253,85 @@ void krutilka_set_type(uint8_t idx, uint8_t tp) { // назначаем крут
 //////////////////////////////////////////////////////////////////////////
 // Параметры по умолчанию для всех крутилок
 //////////////////////////////////////////////////////////////////////////
-#define krutilkaNoteLength 8
-#define krutilkaPedal 0
 void setup_krutilki() { // задать начальные параметры крутилкам
   for( byte i=0; i<KRUTILKI_CNT; i++) {
     krutilka[i].onChange = NULL;
-    krutilka[i].gist = 5;
-    krutilka[i].mx = i % 8; // [0...7]
-    krutilka[i].ch = i / 8; // [0...1]
-    krutilka[i].velocity1 = 20;
-    krutilka[i].velocity127 = 4080;
+    krutilka[i].gist = 30;
+    krutilka[i].mx = i / 2;
+    krutilka[i].ch = i & 0b001;
+    krutilka[i].velocity1 = 100;
+    krutilka[i].velocity127 = 4000;
   }
-  //krutilka_set_type( 8, POT_LENGTH0  );
+  krutilka_set_type( 2, POT_METRONOM  );
+  krutilka_set_type( 0, POT_VOLUME_METRONOM  );
+/*
+Расположение крутилок на плате:
+3, 5, 1, 7,  4, 6, 2, 0
+на доп.плате прибавить 8
+*/  
+}
+
+void show_krutilki_adc() {
+  DBGserial.println();
+  DBGserial.println("Krutilki:");
+  for (byte i=0; i<KRUTILKI_CNT; i++) {
+    if (i<10) DBGserial.print(" ");
+    DBGserial.print(i);
+    DBGserial.print("=");
+    if (krutilka[i].adc<10) DBGserial.print(" ");
+    if (krutilka[i].adc<100) DBGserial.print(" ");
+    if (krutilka[i].adc<1000) DBGserial.print(" ");
+    DBGserial.print( krutilka[i].adc );
+    DBGserial.print("m");
+    DBGserial.print( krutilka[i].mx );
+    DBGserial.print("c");
+    DBGserial.print( krutilka[i].ch );
+    DBGserial.print("\t");
+    if (i%4 == 3) DBGserial.println();
+  }
+}
+
+void show_krutilki() {
+  if ( tm_time < millis() ) {
+    tm_time = millis() + 1000;
+    DBGserial.println();
+    for (byte i=0; i<KRUTILKI_CNT; i++) {
+      if (i<10) DBGserial.print(" ");
+      DBGserial.print(i);
+      DBGserial.print("=");
+      if (krutilka[i].adc<10) DBGserial.print(" ");
+      if (krutilka[i].adc<100) DBGserial.print(" ");
+      if (krutilka[i].adc<1000) DBGserial.print(" ");
+      DBGserial.print( krutilka[i].adc );
+      DBGserial.print("  ");
+    }
+    DBGserial.println();
+  } 
+}
+
+void show_krutilki_buf() {
+  if ( tm_time < millis() ) {
+    tm_time = millis() + 1000;
+    DBGserial.println();
+    uint16_t dat;
+    for (byte i=0; i<KRUTILKI_CNT/2; i++) {
+      if (i<10) DBGserial.print(" ");
+      DBGserial.print(i);
+      DBGserial.print("=");
+      dat = buf_krutilka[i][0];
+      if (dat<10) DBGserial.print(" ");
+      if (dat<100) DBGserial.print(" ");
+      if (dat<1000) DBGserial.print(" ");
+      DBGserial.print( dat );
+      DBGserial.print("/");
+      dat = buf_krutilka[i][1];
+      if (dat<10) DBGserial.print(" ");
+      if (dat<100) DBGserial.print(" ");
+      if (dat<1000) DBGserial.print(" ");
+      DBGserial.print( dat );
+      DBGserial.print("  ");
+    }
+    DBGserial.println();
+  } 
 }
 
