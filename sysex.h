@@ -47,8 +47,11 @@
       0x0E
       номер входа (127 - все)
 0x0F_ Запросить параметры крутилки по номеру
-      0x0E
+      0x0F
       номер крутилки (127 - все)
+0x12_ Показывать отладку в порт DBG
+      0x12
+      0-отключить, 1-включить
 
 ///////////////////////////////////////////////////////////////
 Отсылаемые команды:
@@ -253,6 +256,11 @@ void get_krutilka_params_0F(byte * array, unsigned array_size) { // Запрос
   if ( array[4] < KRUTILKI_CNT ) send_krutilka_params_11( array[4] );
 }
 
+void set_show_debug_12(byte * array, unsigned array_size) { //0x12 cfg.show_debug
+    cfg.show_debug = array[4];
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 void sysexHanlerMaster(byte * array, unsigned array_size) {
@@ -272,6 +280,7 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
     case 0x0D: set_metronome_0D(array,array_size); break;
     case 0x0E: get_analog_params_0E(array,array_size); break; //  Запросить параметры аналогового входа по номеру
     case 0x0F: get_krutilka_params_0F(array,array_size); break; // Запросить параметры крутилки по номеру
+    case 0x12: set_show_debug_12(array,array_size); break; // Запросить параметры крутилки по номеру
     default : 
       DBGserial.print("SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
       break;

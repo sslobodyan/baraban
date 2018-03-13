@@ -31,14 +31,37 @@ void fill_notes() { // присвоить используемым входам 
 }
 
 void setup_kanal() {
+  const byte port[] = {
+//    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31   
+
+     24, 0, 8,16, 1,17,25, 9,26, 2,10,18, 3,19,27,11,28, 4,12,20, 5,21,29,13,30, 6,14,22, 7,23,31,15   
+      
+//    1, 4, 9,12,17,20,25,28, 2, 7,10,15,18,23,26,31,3 ,5 ,11,13,19,21,27,29,0 ,6 ,8 ,14,16,22,24,30 
+//   30,24,26,28,0,4,6,214,8,10,12,16,20,22,18,7,1,3,5,17,21,23,19,31,25,27,29,9,13,15,11
+  };
   fill_notes();
+  DBGserial.println( "Channels:" );
   for (byte i=0; i<NUM_CHANNELS; i++) {
     kanal[i].treshold = 0xFFFF;
     kanal[i].velocity1 = 300;
     kanal[i].velocity127 = 1950;
     kanal[i].scan_cnt = -1;
     kanal[i].group = 1;
+    kanal[i].port = port[i]*2+1;
+    //kanal[i].port = i*2+1;
+    
+    if (i<10) DBGserial.print(" ");
+    DBGserial.print(i);
+    DBGserial.print("/");
+    if (((kanal[i].port-1)/2)<10) DBGserial.print(" ");
+    DBGserial.print( ((kanal[i].port-1)/2) );
+    DBGserial.print("  ");
+    if ( i%8 == 7 ) {
+      DBGserial.println();
+      delay(10);
+    }
   }
+  DBGserial.println();
 }
 
 void setup_touch() {

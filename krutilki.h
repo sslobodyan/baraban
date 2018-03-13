@@ -298,7 +298,8 @@ void setup_krutilki() { // задать начальные параметры к
     krutilka[i].velocity127 = 4000;
     krutilka[i].show = 0;
   }
-  krutilka_set_type( 2, POT_METRONOM  );
+  //krutilka_set_type( 2, POT_METRONOM  );
+  krutilka_set_type( 2, POT_LENGTH0  );
   krutilka_set_type( 0, POT_VOLUME_METRONOM  );
 /*
 Расположение крутилок на плате:

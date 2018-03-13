@@ -9,7 +9,9 @@ inline void store_maximum() {
 
     if (kanal[i].note == 0) continue; // если нота не назначена, то обработку канала пропускаем
 
-    buf = buf_adc[last_buf_idx][idx];
+    //buf = buf_adc[last_buf_idx][idx]; // ToDo сделать перестановку каналов через kanal[].port, который подставлять вместо idx
+    //buf = buf_adc[ last_buf_idx ][ i*2+1 ];
+    buf = buf_adc[ last_buf_idx ][ kanal[i].port ];
     
     if ( kanal[i].scan_cnt == -1 ) { // еще не начинали сканировать - порог пока не превышен
         if ( buf > kanal[i].treshold ) { // превысили порог - начало удара
@@ -38,9 +40,13 @@ inline void store_maximum() {
 
 void store_autotreshold() {
   byte idx=1;
+  uint16_t buf;
   for( byte i=0; i<NUM_CHANNELS; i++) {
-    if ( kanal[i].adc_max < buf_adc[last_buf_idx][idx] ) {
-      kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
+    buf = buf_adc[last_buf_idx][ kanal[i].port ];
+    if ( kanal[i].adc_max < buf ) {
+      //kanal[i].adc_max = buf_adc[last_buf_idx][idx];  
+      //kanal[i].adc_max = buf_adc[last_buf_idx][ i*2+1 ];  
+      kanal[i].adc_max = buf;
     } 
     idx += 2;
   } 
