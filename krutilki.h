@@ -39,11 +39,12 @@ void setPotMetronom( uint8_t value ) {
   cfg.metronom = (int32_t) 60000 / tempo ;
   if ( value != cfg.metronom ) {
     MIDI_Master.sendControlChange( CC_METRONOM, value, DRUMS );
-    DBGserial.print("Metronome ");
-    DBGserial.print( value ); 
-    DBGserial.print(" ="); 
-    DBGserial.println( tempo ); 
-    // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Metronome ");
+      DBGserial.print( value ); 
+      DBGserial.print(" ="); 
+      DBGserial.println( tempo ); 
+    }
   }
 }
 
@@ -51,7 +52,9 @@ void setPotCrossPercent( uint8_t value ) {
   if ( value != cfg.cross_percent ) {
     cfg.cross_percent = value;
     MIDI_Master.sendControlChange( CC_CROSS_PRCNT, value, DRUMS );
-    DBGserial.print("CrossPercent=");DBGserial.println( value ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("CrossPercent=");DBGserial.println( value ); // ToDo Debug
+    }
   }
 }
 
@@ -60,7 +63,9 @@ void setPotMuteCnt( uint8_t value ) {
   cfg.mute_cnt = value * 4;
   if ( old != cfg.mute_cnt ) {
     MIDI_Master.sendControlChange( CC_MUTE_CNT, value, DRUMS );
-    DBGserial.print("MuteCnt=");DBGserial.println( cfg.mute_cnt ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("MuteCnt=");DBGserial.println( cfg.mute_cnt ); // ToDo Debug
+    }
   }
 }
 
@@ -69,7 +74,9 @@ void setPotScanCnt( uint8_t value ) {
   cfg.scan_cnt = value;
   if ( old != cfg.scan_cnt ) {
     MIDI_Master.sendControlChange( CC_SCAN_CNT, value, DRUMS );
-    DBGserial.print("ScanCnt=");DBGserial.println( cfg.scan_cnt ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("ScanCnt=");DBGserial.println( cfg.scan_cnt ); // ToDo Debug
+    }
   }
 }
 
@@ -78,7 +85,9 @@ void setPotCrossCnt( uint8_t value ) {
   cfg.cross_cnt = value;
   if ( old != cfg.cross_cnt ) {
     MIDI_Master.sendControlChange( CC_CROSS_CNT, value, DRUMS );
-    DBGserial.print("CrossCnt=");DBGserial.println( cfg.cross_cnt ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("CrossCnt=");DBGserial.println( cfg.cross_cnt ); // ToDo Debug
+    }
   }
 }
 
@@ -87,7 +96,9 @@ void setPotLength0( uint8_t value ) { // обработчик 0 крутилки
   cfg.noteoff_time0 = value * 100;
   if ( old != cfg.noteoff_time0 ) {
     MIDI_Master.sendControlChange( CC_NOTE_LENGTH0, value, DRUMS );
-    DBGserial.print("Length0=");DBGserial.println( cfg.noteoff_time0 ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Length0=");DBGserial.println( cfg.noteoff_time0 ); // ToDo Debug
+    }
   }
 }
 
@@ -96,7 +107,9 @@ void setPotLength1( uint8_t value ) { // обработчик 0 крутилки
   cfg.noteoff_time1 = value * 100;
   if ( old != cfg.noteoff_time1 ) {
     MIDI_Master.sendControlChange( CC_NOTE_LENGTH1, value, DRUMS );
-    DBGserial.print("Length1=");DBGserial.println( cfg.noteoff_time1 ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Length1=");DBGserial.println( cfg.noteoff_time1 ); // ToDo Debug
+    }
   }
 }
 
@@ -111,7 +124,9 @@ void setPedalSustain( uint8_t value ) { // обработчик 1 крутилк
     changePedalSustain();
     // отсылаем все сообщение о педали
     MIDI_Master.sendControlChange( CC_FOOT_PEDAL, cfg.pedal, DRUMS );
-    DBGserial.print("Sustain=");DBGserial.println( cfg.pedal ); // ToDo Deb
+    if (cfg.show_debug) {
+      DBGserial.print("Sustain=");DBGserial.println( cfg.pedal ); // ToDo Deb
+    }
   }
 }
 
@@ -122,7 +137,9 @@ void setPedalVoice( uint8_t value ) {
   else cfg.pedal_voice = 0;
   if ( old != cfg.pedal_voice ) {
     MIDI_Master.sendControlChange( CC_VOICE_PEDAL, cfg.pedal_voice, DRUMS );
-    DBGserial.print("Voice=");DBGserial.println( cfg.pedal_voice ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("MultiVoice=");DBGserial.println( cfg.pedal_voice ); // ToDo Debug
+    }
   }  
 }
 
@@ -148,7 +165,9 @@ void setPedalOctave( uint8_t value ) {
     
     // отошлем наше СС
     MIDI_Master.sendControlChange( CC_SHIFT_OCTAVE, cfg.pedal_octave, DRUMS );
-    DBGserial.print("Octave=");DBGserial.println( cfg.pedal_octave ); // ToDo Debug    
+    if (cfg.show_debug) {
+      DBGserial.print("Octave=");DBGserial.println( cfg.pedal_octave ); // ToDo Debug    
+    }
   }    
 }
 
@@ -159,7 +178,9 @@ void setPedalProgram( uint8_t value ) {
       cfg.pedal_program = PEDAL_DOWN;
       if (cfg.curr_program > 0) {
         cfg.curr_program -= 1;
-        DBGserial.print("Program-- =");DBGserial.println( cfg.curr_program ); // ToDo Debug
+        if (cfg.show_debug) {
+          DBGserial.print("Program-- =");DBGserial.println( cfg.curr_program ); // ToDo Debug
+        }
       }      
     }
   } else if ( value > 95 ) {
@@ -167,21 +188,27 @@ void setPedalProgram( uint8_t value ) {
       cfg.pedal_program = PEDAL_UP;
       cfg.curr_program += 1;
       if (cfg.curr_program > cfg.max_program) cfg.curr_program = cfg.max_program;
-      DBGserial.print("Program++ =");DBGserial.println( cfg.curr_program ); // ToDo Debug
+      if (cfg.show_debug) {
+        DBGserial.print("Program++ =");DBGserial.println( cfg.curr_program ); // ToDo Debug
+      }
     }
   } else if ( value > 55 && value < 75 ) {
     cfg.pedal_program = PEDAL_CENTER; // среднее положение
   }
   if ( old != cfg.curr_program ) {
     MIDI_Master.sendProgramChange(cfg.curr_program, DRUMS );
-    DBGserial.print("Program=");DBGserial.println( cfg.curr_program ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Program=");DBGserial.println( cfg.curr_program ); // ToDo Debug
+    }
   }    
 }
 
 void setPedalPanic( uint8_t value ) {
   if (value < 42) {
     MIDI_Master.sendControlChange( CC_PANIC, 127, DRUMS );
-    DBGserial.println("Panic!"); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.println("Panic!"); // ToDo Debug
+    }
   }   
 }
 
@@ -190,7 +217,9 @@ void setPotVelocity1( uint8_t value ) {
   cfg.velocity1 = (uint16_t) value * 8;
   if ( old != cfg.velocity1 ) {
     MIDI_Master.sendControlChange( CC_VELOCITY1, value, DRUMS );
-    DBGserial.print("Velocity1=");DBGserial.println( cfg.velocity1 ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Velocity1=");DBGserial.println( cfg.velocity1 ); // ToDo Debug
+    }
   }  
 }
 
@@ -199,7 +228,9 @@ void setPotVelocity127( uint8_t value ) {
   cfg.velocity127 = (uint16_t) value * 8;
   if ( old != cfg.velocity127 ) {
     MIDI_Master.sendControlChange( CC_VELOCITY127, cfg.velocity127, DRUMS );
-    DBGserial.print("Velocity127=");DBGserial.println( cfg.velocity127 ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Velocity127=");DBGserial.println( cfg.velocity127 ); // ToDo Debug
+    }
   }  
 }
 
@@ -208,7 +239,9 @@ void setPotVolume( uint8_t value ) {
   cfg.volume = value;
   if ( old != cfg.volume ) {
     MIDI_Master.sendControlChange( CC_VOLUME, cfg.volume, DRUMS );
-    DBGserial.print("Volume=");DBGserial.println( cfg.volume ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Volume=");DBGserial.println( cfg.volume ); // ToDo Debug
+    }
   } 
 }
 
@@ -216,7 +249,9 @@ void setPotVolumeMetronome( uint8_t value ) {
   if (value < 5) value = 0;
   if ( value != cfg.metronom_volume ) {
     cfg.metronom_volume = value;
-    DBGserial.print("Metronome Volume=");DBGserial.println( cfg.metronom_volume ); // ToDo Debug
+    if (cfg.show_debug) {
+      DBGserial.print("Metronome Volume=");DBGserial.println( cfg.metronom_volume ); // ToDo Debug
+    }
   } 
 }
 
@@ -261,6 +296,7 @@ void setup_krutilki() { // задать начальные параметры к
     krutilka[i].ch = i & 0b001;
     krutilka[i].velocity1 = 100;
     krutilka[i].velocity127 = 4000;
+    krutilka[i].show = 0;
   }
   krutilka_set_type( 2, POT_METRONOM  );
   krutilka_set_type( 0, POT_VOLUME_METRONOM  );
@@ -282,7 +318,7 @@ void show_krutilki_adc() {
     if (krutilka[i].adc<100) DBGserial.print(" ");
     if (krutilka[i].adc<1000) DBGserial.print(" ");
     DBGserial.print( krutilka[i].adc );
-    DBGserial.print("m");
+    DBGserial.print(" m");
     DBGserial.print( krutilka[i].mx );
     DBGserial.print("c");
     DBGserial.print( krutilka[i].ch );

@@ -26,7 +26,7 @@
 
 struct MySettings : public midi::DefaultSettings
 {
-  static const unsigned SysExMaxSize = 100; // Accept SysEx messages up to 256 bytes long.
+  static const unsigned SysExMaxSize = 255; // Accept SysEx messages up to 256 bytes long.
   static const long BaudRate = MIDI_SPEED;
   //static const bool Use1ByteParsing = false;
 };
@@ -165,33 +165,34 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
 #define SHOW_NOTE_ON
 
   #ifdef SHOW_NOTE_ON
-    DBGserial.print("  ");    
-    DBGserial.print( ch );
-    DBGserial.print("\tc ");    
-    DBGserial.print( notes[idx].cross_cnt );    
-    DBGserial.print("\tlv ");    
-    if (level < 10) DBGserial.print(" ");
-    if (level < 100) DBGserial.print(" ");
-    if (level < 1000) DBGserial.print(" ");
-    DBGserial.print( level );    
-    DBGserial.print("\t\tv ");    
-    if (velocity < 10) DBGserial.print(" ");
-    if (velocity < 100) DBGserial.print(" ");
-    if (velocity < 1000) DBGserial.print(" ");
-    DBGserial.print( velocity );    
-    DBGserial.print(" ");    
-    for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");
-    DBGserial.print(" ");   
-    for (byte i=0; i<NUM_CHANNELS; i++) {
-      //DBGserial.print(kanal[i].pressed); DBGserial.print(",");
+    if (cfg.show_debug) {
+      DBGserial.print("  ");    
+      DBGserial.print( ch );
+      DBGserial.print("\tc ");    
+      DBGserial.print( notes[idx].cross_cnt );    
+      DBGserial.print("\tlv ");    
+      if (level < 10) DBGserial.print(" ");
+      if (level < 100) DBGserial.print(" ");
+      if (level < 1000) DBGserial.print(" ");
+      DBGserial.print( level );    
+      DBGserial.print("\t\tv ");    
+      if (velocity < 10) DBGserial.print(" ");
+      if (velocity < 100) DBGserial.print(" ");
+      if (velocity < 1000) DBGserial.print(" ");
+      DBGserial.print( velocity );    
+      DBGserial.print(" ");    
+      for (byte i=0; i<(velocity+4)/4; i++) DBGserial.print("=");
+      DBGserial.print(" ");   
+      for (byte i=0; i<NUM_CHANNELS; i++) {
+        //DBGserial.print(kanal[i].pressed); DBGserial.print(",");
+      }
+      //DBGserial.print( kanal[ch].pressed );
+      DBGserial.println();
     }
-    //DBGserial.print( kanal[ch].pressed );
-    DBGserial.println();
     return true;
   #else
     return false;  
   #endif
-  
   
 }
 

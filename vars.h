@@ -121,6 +121,7 @@ struct stConfig {
   uint8_t metronom_krat = 4; // кратность долей метронома
   uint8_t cross_percent = 30; // подавлять кросстолк до указанного уровня в процентах от самого сильного сигнала
   uint16_t max_level = 1800; // уровень сигнала, когда включаем красный светодиод
+  bool show_debug = false; // выводить отладку в порт
 } cfg;
 
 #define NOTES_CNT 10 // длина буфера нажатых нот 
@@ -134,7 +135,7 @@ struct stNotes {
 volatile byte head_notes, tail_notes; // указатели на голову и хвост буфера нот
 bool stop_scan; // флаг остановки сканирования
 
-#define KRUTILKI_CNT 16 // максимальное число крутилок
+#define KRUTILKI_CNT 8 // максимальное число крутилок
 struct stKrutilka {
   uint16_t velocity1; // АЦП для 1
   uint16_t velocity127; // АЦП для 127

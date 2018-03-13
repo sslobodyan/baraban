@@ -155,7 +155,11 @@ void main_loop(){
       tail_notes++;
       if (tail_notes >= NOTES_CNT) tail_notes=0;
       bool flag = note_on(tail_notes); // играть ноту из буфера нажатых нот
-      if ( flag ) DBGserial.println();    
+      if ( flag ) {
+        if (cfg.show_debug) {
+          DBGserial.println();    
+        }
+      }
     }
   }
   
