@@ -2,6 +2,8 @@
 #include <libmaple/dma.h>
 #include <MIDI.h>
 #include <Wire.h>
+#include <EEPROM.h>
+
 
 #include "vars.h"
 #include "adc.h"
@@ -9,6 +11,8 @@
 #include "midis.h"
 #include "mpr.h"
 #include "krutilki.h"
+#include "eprom.h"
+
 
 void setup() {
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY); // relase PC3 and PC5 
@@ -49,6 +53,18 @@ void setup() {
   setup_touch(); // распределение датчиков касания по каналах
 */  
 
+  setup_eeprom();
+  DBGserial.print("Init");
+  if ( check_eprom_inited() ){
+    DBGserial.println("ed OK");
+  } else {
+    DBGserial.println(" -");
+    //init_flash();
+  }
+  DBGserial.print("Size ");
+  DBGserial.print( sizeof(cfg) );
+  DBGserial.print(" / ");
+  DBGserial.println( sizeof(krutilka) );
 }
 
 void setup_module() { // по перемычкам определить тип модуля и соотв. назначить номера нот  

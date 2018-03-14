@@ -110,10 +110,11 @@ struct stConfig {
   uint8_t pedal_program = PEDAL_CENTER; // состояние педали номера программы (0-отпущена, 1-вниз, 2-вверх)
   uint8_t curr_program = 0; // текущий номер программы
   uint8_t max_program = 10; // максимальный номер программы
-  uint16_t velocity1 = 0;
-  uint16_t velocity127 = 0;
   uint8_t volume=100;
   uint8_t cross_cnt = 6; // сколько опросов АЦП ждать кросстолк (1 опрос 133 мкс)
+  uint8_t show_debug = true; // выводить отладку в порт
+  uint16_t velocity1 = 0;
+  uint16_t velocity127 = 0;
   int16_t scan_cnt = 12; // 6==800us количество полных сканирований АЦП после превышения трешолда
   int16_t mute_cnt = 560; // количество полных сканирований АЦП для игнора успокаивающегося датчика
   uint32_t metronom = 500; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим
@@ -122,7 +123,7 @@ struct stConfig {
   uint8_t metronom_krat = 4; // кратность долей метронома
   uint8_t cross_percent = 30; // подавлять кросстолк до указанного уровня в процентах от самого сильного сигнала
   uint16_t max_level = 1800; // уровень сигнала, когда включаем красный светодиод
-  bool show_debug = true; // выводить отладку в порт
+//  uint8_t pusto; // // выровнять размер структуры на 16 бит !!!
 } cfg;
 
 #define NOTES_CNT 10 // длина буфера нажатых нот 
@@ -137,7 +138,7 @@ volatile byte head_notes, tail_notes; // указатели на голову и
 bool stop_scan; // флаг остановки сканирования
 
 #define KRUTILKI_CNT 8 // максимальное число крутилок
-struct stKrutilka {
+struct stKrutilka { 
   uint16_t velocity1; // АЦП для 1
   uint16_t velocity127; // АЦП для 127
   uint8_t value; // в пересчете от 1 до 127
@@ -147,6 +148,7 @@ struct stKrutilka {
   void (*onChange)(uint8_t idx); // обработчик при изменении значения крутилки IDX
   // обработчик изменения
   uint8_t show; // (0-молчать,1-вывод текущего уровня)
+  uint8_t pusto; // // выровнять размер структуры на 16 бит !!!
   uint16_t adc; // текущее значение по АЦП
 } krutilka[ KRUTILKI_CNT ];
 
