@@ -246,7 +246,11 @@ void setPotVolume( uint8_t value ) {
 }
 
 void setPotVolumeMetronome( uint8_t value ) {
-  if (value < 5) value = 0;
+  if (value < 5) {
+    value = 0;
+    RED_OFF;
+    GREEN_OFF;
+  }
   if ( value != cfg.metronom_volume ) {
     cfg.metronom_volume = value;
     if (cfg.show_debug) {
@@ -289,17 +293,34 @@ void krutilka_set_type(uint8_t idx, uint8_t tp) { // назначаем крут
 // Параметры по умолчанию для всех крутилок
 //////////////////////////////////////////////////////////////////////////
 void setup_krutilki() { // задать начальные параметры крутилкам
+  const byte port[8][2] = {
+    {0,0},
+    {1,0},
+    {3,0},
+    {2,0},
+    {3,1},
+    {0,1},
+    {2,1},
+    {1,1}
+  };
   for( byte i=0; i<KRUTILKI_CNT; i++) {
     krutilka[i].onChange = NULL;
-    krutilka[i].gist = 30;
-    krutilka[i].mx = i / 2;
-    krutilka[i].ch = i & 0b001;
+    krutilka[i].gist = 32;
+    //krutilka[i].mx = i / 2;
+    //krutilka[i].ch = i & 0b001;
+    if (i<8) {
+      krutilka[i].mx = port[i][0];
+      krutilka[i].ch = port[i][1];
+    } else {
+      krutilka[i].mx = port[i][0]+4;
+      krutilka[i].ch = port[i][1];      
+    }
     krutilka[i].velocity1 = 100;
     krutilka[i].velocity127 = 4000;
     krutilka[i].show = 0;
   }
   //krutilka_set_type( 2, POT_METRONOM  );
-  krutilka_set_type( 2, POT_LENGTH0  );
+  krutilka_set_type( 1, POT_LENGTH0  );
   krutilka_set_type( 0, POT_VOLUME_METRONOM  );
 /*
 Расположение крутилок на плате:
