@@ -312,8 +312,8 @@ void setup_krutilki() { // задать начальные параметры к
       krutilka[i].mx = port[i][0];
       krutilka[i].ch = port[i][1];
     } else {
-      krutilka[i].mx = port[i][0]+4;
-      krutilka[i].ch = port[i][1];      
+      krutilka[i].mx = port[i/2][0]+4;
+      krutilka[i].ch = port[i/2][1];      
     }
     krutilka[i].velocity1 = 100;
     krutilka[i].velocity127 = 4000;
