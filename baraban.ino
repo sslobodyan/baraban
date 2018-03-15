@@ -59,12 +59,19 @@ void setup() {
     DBGserial.println("ed OK");
   } else {
     DBGserial.println(" -");
-    //init_flash();
+    init_flash();
   }
   DBGserial.print("Size ");
   DBGserial.print( sizeof(cfg) );
   DBGserial.print(" / ");
   DBGserial.println( sizeof(krutilka) );
+  read_cfg_from_eprom();
+  read_krutilka_from_eprom();
+  DBGserial.println("Restored");
+  
+  print_serial();
+  serial_to_config(); 
+  print_serial();
 }
 
 void setup_module() { // по перемычкам определить тип модуля и соотв. назначить номера нот  

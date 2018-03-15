@@ -35,7 +35,7 @@ void read_cfg_from_eprom(void) { // считать в структуру cfg
   }
 }
 
-uint16_t save_krutilki_to_eprom(void) { // записать cfg
+uint16_t save_krutilka_to_eprom(void) { // записать cfg
   uint16_t addr = START_EPROM_ADDR + sizeof(cfg)/2 + 1;
   uint16_t data;
   uint16_t* ptr;
@@ -49,7 +49,7 @@ uint16_t save_krutilki_to_eprom(void) { // записать cfg
   return stat;
 }
 
-void read_krutilki_from_eprom(void) { // считать в структуру cfg
+void read_krutilka_from_eprom(void) { // считать в структуру cfg
   uint16_t addr = START_EPROM_ADDR + sizeof(cfg)/2 + 1;
   uint16_t data;
   uint16_t* ptr;
@@ -64,7 +64,7 @@ void init_flash(void) {
   EEPROM.format();
   write_eeprom(0, 1302);
   save_cfg_to_eprom();
-  save_krutilki_to_eprom();
+  save_krutilka_to_eprom();
 }
 
 bool check_eprom_inited() {
@@ -80,4 +80,26 @@ uint16_t setup_eeprom(void) {
   return ( EEPROM.init() );
 }
 
+void serial_to_config() {
+  long unsigned int addr = 0x1FFFF700;
+  byte i;
+  uint32_t *ptr;
+  for (i=0; i< 0xE8+0x04; i++) addr++;
+  ptr = (uint32_t *) addr;
+  cfg.ser2 = (uint32_t) *ptr;
+  ptr -= 1;
+  cfg.ser1 = (uint32_t) *ptr;
+  ptr += 2;
+  cfg.ser3 = (uint32_t) *ptr;
+}
+
+void print_serial(){
+  DBGserial.print("Config ");
+  DBGserial.print(" 0x");
+  DBGserial.print(cfg.ser1, HEX);
+  DBGserial.print(" 0x");
+  DBGserial.print(cfg.ser2, HEX);
+  DBGserial.print(" 0x");
+  DBGserial.println(cfg.ser3, HEX);  
+}
 

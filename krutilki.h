@@ -259,6 +259,57 @@ void setPotVolumeMetronome( uint8_t value ) {
   } 
 }
 
+void setPedalMetronome1( uint8_t value ) {
+  byte old = cfg.pedal_metronom1;
+  if ( value < 32 ) {
+    if ( cfg.pedal_metronom1 != PEDAL_DOWN ) {
+      cfg.pedal_metronom1 = PEDAL_DOWN;
+      if (cfg.metronom > METRONOME_MIN) {
+        cfg.metronom -= 1;
+        if (cfg.show_debug) {
+          DBGserial.print("Metronome-- =");DBGserial.println( cfg.metronom ); // ToDo Debug
+        }
+      }      
+    }
+  } else if ( value > 95 ) {
+    if ( cfg.pedal_metronom1 != PEDAL_UP ) {
+      cfg.pedal_metronom1 = PEDAL_UP;
+      if (cfg.metronom < METRONOME_MAX) cfg.metronom++;
+      if (cfg.show_debug) {
+        DBGserial.print("Metronome++ =");DBGserial.println( cfg.metronom ); // ToDo Debug
+      }
+    }
+  } else if ( value > 55 && value < 75 ) {
+    cfg.pedal_metronom1 = PEDAL_CENTER; // среднее положение
+  }
+}
+
+void setPedalMetronome10( uint8_t value ) {
+  byte old = cfg.pedal_metronom10;
+  if ( value < 32 ) {
+    if ( cfg.pedal_metronom10 != PEDAL_DOWN ) {
+      cfg.pedal_metronom10 = PEDAL_DOWN;
+      if (cfg.metronom >= METRONOME_MIN+10) {
+        cfg.metronom -= 10;
+        if (cfg.show_debug) {
+          DBGserial.print("Metronome-- =");DBGserial.println( cfg.metronom ); // ToDo Debug
+        }
+      }      
+    }
+  } else if ( value > 95 ) {
+    if ( cfg.pedal_metronom10 != PEDAL_UP ) {
+      cfg.pedal_metronom10 = PEDAL_UP;
+      if (cfg.metronom < METRONOME_MAX-10) cfg.metronom+=10;
+      if (cfg.show_debug) {
+        DBGserial.print("Metronome++ =");DBGserial.println( cfg.metronom ); // ToDo Debug
+      }
+    }
+  } else if ( value > 55 && value < 75 ) {
+    cfg.pedal_metronom10 = PEDAL_CENTER; // среднее положение
+  }
+}
+
+
 void set_handl(uint8_t tp) { // назначаем глобальной переменной обработчик крутилки
   switch ( tp ) {
     case PEDAL_SUSTAIN: handl = setPedalSustain; break;
@@ -274,6 +325,9 @@ void set_handl(uint8_t tp) { // назначаем глобальной пере
     case POT_VOLUME_METRONOM: handl = setPotVolumeMetronome; break;
     case POT_CROSS_PRCNT: handl = setPotCrossPercent; break;
     case POT_METRONOM: handl = setPotMetronom; break;
+    case PEDAL_METRONOM1: handl = setPedalMetronome1; break;
+    case PEDAL_METRONOM10: handl = setPedalMetronome10; break;
+    
     deafult: handl = NULL ;
   }
 }
@@ -320,8 +374,8 @@ void setup_krutilki() { // задать начальные параметры к
     krutilka[i].show = 0;
   }
   //krutilka_set_type( 2, POT_METRONOM  );
-  krutilka_set_type( 1, POT_LENGTH0  );
-  krutilka_set_type( 0, POT_VOLUME_METRONOM  );
+  //krutilka_set_type( 1, POT_LENGTH0  );
+  //krutilka_set_type( 0, POT_VOLUME_METRONOM  );
 /*
 Расположение крутилок на плате:
 3, 5, 1, 7,  4, 6, 2, 0
