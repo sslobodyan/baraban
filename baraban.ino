@@ -8,10 +8,11 @@
 #include "vars.h"
 #include "adc.h"
 #include "utils.h"
+#include "eprom.h"
+#include "sysex.h"
 #include "midis.h"
 #include "mpr.h"
 #include "krutilki.h"
-#include "eprom.h"
 
 
 void setup() {

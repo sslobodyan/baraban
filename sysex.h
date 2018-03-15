@@ -52,6 +52,9 @@
 0x12_ Показывать отладку в порт DBG
       0x12
       0-отключить, 1-включить
+0x13_ EEPROM      
+      0x13
+      0-считать, 1-записать
 
 ///////////////////////////////////////////////////////////////
 Отсылаемые команды:
@@ -260,6 +263,20 @@ void set_show_debug_12(byte * array, unsigned array_size) { //0x12 cfg.show_debu
     cfg.show_debug = array[4];
 }
 
+void set_eprom_13(byte * array, unsigned array_size) { //0x13 0-читать,1-записать конфигурацию в епром
+    switch (array[4]) {
+      case 0:
+              read_cfg_from_eprom();
+              read_krutilka_from_eprom();
+              break;
+      case 1:
+              save_cfg_to_eprom();
+              save_krutilka_to_eprom();
+              break;
+      default: ;
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -281,6 +298,7 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
     case 0x0E: get_analog_params_0E(array,array_size); break; //  Запросить параметры аналогового входа по номеру
     case 0x0F: get_krutilka_params_0F(array,array_size); break; // Запросить параметры крутилки по номеру
     case 0x12: set_show_debug_12(array,array_size); break; // Запросить параметры крутилки по номеру
+    case 0x13: set_eprom_13(array,array_size); break; // 0-читать,1-записать конфигурацию в епром
     default : 
       DBGserial.print("SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
       break;

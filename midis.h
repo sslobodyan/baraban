@@ -1,4 +1,3 @@
-#include "sysex.h"
 
 #define MIDI_SPEED 115200
 //#define MIDI_SPEED 38400
