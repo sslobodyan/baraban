@@ -97,10 +97,8 @@ struct stChannel {
 
 struct stConfig {
   uint32_t autotreshold_above = 40; // порог выше уровня шумов
-  uint32_t ser1;
   uint32_t noteoff_time0 = 500; // ms звучания ноты без педали
   uint32_t noteoff_time1 = 2500; // ms звучания ноты с полупедалью
-  uint32_t cnt_over = 3; // минимальное количество последовательных превышений уровня для отсеивания коротких шумов 
   uint32_t autotreshold_time = 1000; // ms настройки порогов после старта
   uint8_t pedal = 0; // состояние педали sustain 0 - 63 - 127
   uint8_t pedal_voice = 0; // состояние педали для добавления к номеру голоса
@@ -109,7 +107,6 @@ struct stConfig {
   uint8_t module = MODULE_72; // номер модуля (меняется при включении)
   uint8_t start_note = MODULE_72; // номер ноты нулевого входа
   uint8_t end_note = MODULE_72+32; // номер ноты последнего входа
-  uint32_t ser2;
   uint8_t pedal_octave = PEDAL_CENTER; // состояние педали сдвига октавы (12==без сдвига)
   uint8_t pedal_program = PEDAL_CENTER; // состояние педали номера программы (0-отпущена, 1-вниз, 2-вверх)
   uint8_t curr_program = 0; // текущий номер программы
@@ -119,7 +116,6 @@ struct stConfig {
   uint8_t show_debug = true; // выводить отладку в порт
   uint16_t velocity1 = 0;
   uint16_t velocity127 = 0;
-  uint32_t ser3;
   int16_t scan_cnt = 12; // 6==800us количество полных сканирований АЦП после превышения трешолда
   int16_t mute_cnt = 560; // количество полных сканирований АЦП для игнора успокаивающегося датчика
   uint32_t metronom = 500; // 500 == 60000 / 120  интервал в миллисекундах, если 0 - то молчим

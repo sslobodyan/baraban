@@ -70,16 +70,13 @@ void setup() {
   read_krutilka_from_eprom();
   DBGserial.println("Restored");
   
-  print_serial();
-  serial_to_config(); 
-  print_serial();
 }
 
 void setup_module() { // по перемычкам определить тип модуля и соотв. назначить номера нот  
   pinMode(SELECT_MODULE1, INPUT_PULLUP);
   pinMode(SELECT_MODULE2, INPUT_PULLUP);
-  if ( digitalRead(SELECT_MODULE1) ) {
-    if ( digitalRead(SELECT_MODULE2) ) {
+  if ( digitalRead(SELECT_MODULE1) ) { // разомкнут
+    if ( digitalRead(SELECT_MODULE2) ) { // разомкнут
       cfg.module = MODULE_72;
       cfg.start_note = MODULE_72; 
       cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
@@ -91,7 +88,7 @@ void setup_module() { // по перемычкам определить тип �
       DBGserial.println( "Module_60" );
     }
   } else {
-    if ( digitalRead(SELECT_MODULE2) ) {
+    if ( digitalRead(SELECT_MODULE2) ) { // разомкнут
       cfg.module = MODULE_48;
       cfg.start_note = MODULE_48; 
       cfg.end_note = cfg.start_note + 32; // ToDo 25 ?
@@ -194,12 +191,12 @@ void main_loop(){
         kanal[i].noteoff_time = 0;
         // гасим метроном
         if ( i == NUM_CHANNELS-1 ) {
-          if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
+          if (( cfg.metronom > 0) && (cfg.metronom_volume >=  5)) {
             RED_OFF;  
           }
         }
         if ( i == NUM_CHANNELS-2 ) {
-          if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
+          if (( cfg.metronom > 0) && (cfg.metronom_volume >= 5)) {
             GREEN_OFF;  
           }
         }
@@ -207,7 +204,7 @@ void main_loop(){
     }
   }
 
-  if (( cfg.metronom > 0) && (cfg.metronom_volume > 1)) {
+  if (( cfg.metronom > 0) && (cfg.metronom_volume >= 5)) {
     if ( millis() - old_metronom >= cfg.metronom ) {
       #define METRONOM_HARD 35
       #define METRONOM_SOFT 25

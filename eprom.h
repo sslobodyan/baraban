@@ -80,26 +80,5 @@ uint16_t setup_eeprom(void) {
   return ( EEPROM.init() );
 }
 
-void serial_to_config() {
-  long unsigned int addr = 0x1FFFF700;
-  byte i;
-  uint32_t *ptr;
-  for (i=0; i< 0xE8+0x04; i++) addr++;
-  ptr = (uint32_t *) addr;
-  cfg.ser2 = (uint32_t) *ptr;
-  ptr -= 1;
-  cfg.ser1 = (uint32_t) *ptr;
-  ptr += 2;
-  cfg.ser3 = (uint32_t) *ptr;
-}
 
-void print_serial(){
-  DBGserial.print("Config ");
-  DBGserial.print(" 0x");
-  DBGserial.print(cfg.ser1, HEX);
-  DBGserial.print(" 0x");
-  DBGserial.print(cfg.ser2, HEX);
-  DBGserial.print(" 0x");
-  DBGserial.println(cfg.ser3, HEX);  
-}
 

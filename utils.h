@@ -80,7 +80,7 @@ void add_note(byte ch, uint16_t level) { // из прерывания строи
   notes[idx].cross_cnt = adc_dma_cnt + cfg.cross_cnt ;
   notes[idx].group = kanal[ch].group; // группу запомним для бысрой фильтрации в кросстолке
   head_notes = idx;
-  if ((cfg.metronom == 0) || (cfg.metronom_volume == 0)) { // отключен метроном - показываем удары
+  if ((cfg.metronom == 0) || (cfg.metronom_volume <5 )) { // отключен метроном - показываем удары
     GREEN_ON;
     time_green = millis() + 50;
     if (level > cfg.max_level) { // превышен максимальный уровень - надо снизить усиление
