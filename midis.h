@@ -21,6 +21,7 @@
 #define CC_CROSS_CNT 75 // 
 #define CC_CROSS_PRCNT 76 //
 #define CC_METRONOM 77 //
+#define CC_AUTOTRESHOLD 78 //
 
 
 struct MySettings : public midi::DefaultSettings
@@ -57,7 +58,9 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
       case CC_CROSS_PRCNT: cfg.cross_percent = value;
                       break;     
       case CC_METRONOM: cfg.metronom = 60000 / map(value, 0, 127, METRONOME_MIN, METRONOME_MAX) ;
-                      break;                                        
+                      break;      
+      case CC_AUTOTRESHOLD: if (value == PEDAL_DOWN) start_autotreshold();
+                      break;                                                      
       default: break;
     }
 }

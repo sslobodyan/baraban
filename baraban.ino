@@ -63,11 +63,14 @@ void setup() {
     init_flash();
   }
   DBGserial.print("Size ");
-  DBGserial.print( sizeof(cfg) );
+  DBGserial.print( sizeof(cfg)/2 );
   DBGserial.print(" / ");
-  DBGserial.println( sizeof(krutilka) );
+  DBGserial.print( sizeof(kanal) );
+  DBGserial.print(" / ");
+  DBGserial.println( sizeof(krutilka)/2 );
   read_cfg_from_eprom();
   read_krutilka_from_eprom();
+  read_kanal_from_eprom();
   DBGserial.println("Restored");
   
 }
@@ -127,7 +130,7 @@ void main_loop(){
     adc_new_cycle = false;
     if ( scan_autotreshold ) {
       store_autotreshold(); // набираем максимумы по каналам
-      if (  millis() >= cfg.autotreshold_time ) { // прошло время автотрешолда
+      if (  millis() - time_autotreshold >= cfg.autotreshold_time ) { // прошло время автотрешолда
         scan_autotreshold = false;
         for (byte i=0; i<NUM_CHANNELS; i++) {
           kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
@@ -243,12 +246,8 @@ void main_loop(){
 }
 
 void loop() {
-  scan_autotreshold = true;
-  DBGserial.println("Gather noise.. ");
 
   setup_new_scan(); // запускаем опрос в работу
-  
-  //stop_scan = true; // ToDo debug
 
   while (1) main_loop();
 }

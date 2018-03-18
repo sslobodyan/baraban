@@ -1,4 +1,6 @@
 #define START_EPROM_ADDR 1
+#define KRUTILKA_EPROM_ADDR START_EPROM_ADDR+sizeof(cfg)/2
+#define KANAL_EPROM_ADDR KRUTILKA_EPROM_ADDR+sizeof(krutilka)/2
 
 uint16_t write_eeprom(uint16_t AddressWrite, uint16_t DataWrite) { // записать 16 бит
   return ( EEPROM.write(AddressWrite, DataWrite) );
@@ -36,7 +38,7 @@ void read_cfg_from_eprom(void) { // считать в структуру cfg
 }
 
 uint16_t save_krutilka_to_eprom(void) { // записать cfg
-  uint16_t addr = START_EPROM_ADDR + sizeof(cfg)/2 + 1;
+  uint16_t addr = KRUTILKA_EPROM_ADDR;
   uint16_t data;
   uint16_t* ptr;
   uint16_t stat;
@@ -50,7 +52,7 @@ uint16_t save_krutilka_to_eprom(void) { // записать cfg
 }
 
 void read_krutilka_from_eprom(void) { // считать в структуру cfg
-  uint16_t addr = START_EPROM_ADDR + sizeof(cfg)/2 + 1;
+  uint16_t addr = KRUTILKA_EPROM_ADDR;
   uint16_t data;
   uint16_t* ptr;
   ptr = (uint16_t*) krutilka;
@@ -60,11 +62,57 @@ void read_krutilka_from_eprom(void) { // считать в структуру cf
   }
 }
 
+uint16_t save_kanal_to_eprom(void) { // записать kanal в свою область
+  uint32_t addr = (uint32_t) 0x8000000UL + 124*1024 ;
+  uint16_t data;
+  uint16_t* ptr;
+  uint16_t stat;
+  // полностью затираем 2 страницы
+  DBGserial.print("Erase 0x");
+  DBGserial.print(addr);
+  DBGserial.print(" = ");
+  DBGserial.println( FLASH_ErasePage(addr) );
+  DBGserial.print("Erase 0x");
+  DBGserial.print(addr + 1024);
+  DBGserial.print(" = ");
+  DBGserial.println( FLASH_ErasePage(addr + 1024) );
+  // теперь пишем в нее весь массив
+  ptr = (uint16_t*) kanal;
+  for (int i = 0; i < sizeof(kanal) / sizeof(int16_t) ; i++) {
+    data = *ptr;
+/*
+    DBGserial.print(" ");
+    DBGserial.print(addr);
+    DBGserial.print("=");
+    DBGserial.println(data, HEX);
+*/    
+    stat = FLASH_ProgramHalfWord(addr, data);
+    addr += 2;
+    ptr++;
+  }
+  return stat;
+}
+
+void read_kanal_from_eprom(void) { // считать в структуру cfg
+  uint32_t addr = (uint32_t) 0x8000000UL + 124*1024 ;
+  uint16_t data;
+  uint16_t* ptr;
+  ptr = (uint16_t*) kanal;
+  for (int i = 0; i < sizeof(kanal) / 2; i++) {
+    //data = read_eeprom( addr++ );
+    data = (*(__io uint16*) addr);
+    addr += 2;
+    *(ptr++) = data;
+  }
+}
+
+
 void init_flash(void) {
   EEPROM.format();
   write_eeprom(0, 1302);
   save_cfg_to_eprom();
   save_krutilka_to_eprom();
+  save_kanal_to_eprom();
 }
 
 bool check_eprom_inited() {

@@ -58,6 +58,9 @@
 0x13_ EEPROM      
       0x13
       0-считать, 1-записать
+0x14_ Запуск автотрешолда
+      0x14
+      127-запустить
 
 ///////////////////////////////////////////////////////////////
 Отсылаемые команды:
@@ -279,13 +282,25 @@ void set_eprom_13(byte * array, unsigned array_size) { //0x13 0-читать,1-�
       case 0:
               read_cfg_from_eprom();
               read_krutilka_from_eprom();
+              read_kanal_from_eprom();
+              if (cfg.show_debug) {
+                DBGserial.println("Config restored");
+              }
               break;
       case 1:
               save_cfg_to_eprom();
               save_krutilka_to_eprom();
+              save_kanal_to_eprom();
+              if (cfg.show_debug) {
+                DBGserial.println("Config saved");
+              }
               break;
       default: ;
     }
+}
+
+void set_autotreshold_14(byte * array, unsigned array_size) { //0x14 1-запустить
+    if (array[4] == 127) start_autotreshold();
 }
 
 
@@ -310,6 +325,8 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
     case 0x0F: get_krutilka_params_0F(array,array_size); break; // Запросить параметры крутилки по номеру
     case 0x12: set_show_debug_12(array,array_size); break; // Запросить параметры крутилки по номеру
     case 0x13: set_eprom_13(array,array_size); break; // 0-читать,1-записать конфигурацию в епром
+    case 0x14: set_autotreshold_14(array,array_size); break; // 1-запустить
+    
     default : 
       DBGserial.print("SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
       break;
@@ -317,5 +334,7 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
 }
 
 void sysexHanlerSlave(byte * array, unsigned array_size) {
+  DBGserial.print("DBG SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
+  sysexHanlerMaster(array,array_size); 
 }
 

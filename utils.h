@@ -180,4 +180,9 @@ byte idx_note=0;
     return true; // можно играть  
 }
 
+void start_autotreshold() {
+  scan_autotreshold = true;
+  time_autotreshold = millis();
+  DBGserial.println("Gather noise for treshold calculate .. ");
+}
 

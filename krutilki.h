@@ -205,9 +205,18 @@ void setPedalProgram( uint8_t value ) {
 
 void setPedalPanic( uint8_t value ) {
   if (value < 42) {
-    MIDI_Master.sendControlChange( CC_PANIC, 127, DRUMS );
+    MIDI_Master.sendControlChange( CC_PANIC, PEDAL_DOWN, DRUMS );
     if (cfg.show_debug) {
       DBGserial.println("Panic!"); // ToDo Debug
+    }
+  }   
+}
+
+void setPedalAutotreshold( uint8_t value ) {
+  if (value < 42) {
+    MIDI_Master.sendControlChange( CC_AUTOTRESHOLD, PEDAL_DOWN, DRUMS );
+    if (cfg.show_debug) {
+      DBGserial.println("Start autotreshold"); // ToDo Debug
     }
   }   
 }
