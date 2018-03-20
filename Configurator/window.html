@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+ 
+	<script src="jquery-3.2.1.js"></script>
+    <script src="bootstrap.min.js"></script>
+	<script src="serial.js"></script>
+	<script src="pots.js"></script>
+	<script src="midi.js"></script>
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+
+</head>
+
+<body>
+
+<div class="container">
+	<div id="led" style="width:10px;
+        height: 10px;
+		border-radius: 5px;
+        background: 'white';
+        border: 1px solid #939393;
+		position: absolute;
+		left: 10px;
+		top: 1em;
+		">
+	</div>
+  	<h3>
+	Configurator
+	</h3>
+
+	<select id="portList"></select>
+	<button id="open">Open connection</button>
+
+	<ul class="nav nav-tabs">
+	  <li class="active"><a data-toggle="tab" href="#home">Log</a></li>
+	  <li><a data-toggle="tab" href="#Global">Global</a></li>
+	  <li><a data-toggle="tab" href="#Piezos">Piezos</a></li>
+	  <li><a data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
+	</ul>
+
+  <div class="tab-content">
+    <div id="home" class="tab-pane fade in active">
+
+	<div id="cmdLine" style="display:none;">
+		<input maxlength="16" size="16" id="Textfield"></input>
+		<input maxlength="16" size="16" id="Textfield2"></input>
+		<button id="send">Send</button>
+		
+		<p>Console</p>
+		<textarea rows="10" cols="32" id="console"></textarea>
+		<button id="clear">clear</button>
+	</div>                                                      	
+
+    </div>
+
+    <div id="Global" class="tab-pane fade">
+    </div>
+
+    <div id="Piezos" class="tab-pane fade">
+    </div>
+
+    <div id="Pots" class="tab-pane fade">
+    </div>
+
+  </div>
+	
+
+</div>
+
+</body>
+</html>
+
+
