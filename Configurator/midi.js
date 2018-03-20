@@ -98,7 +98,6 @@ var doMidiHandler = function(buf) {
 var doNoteOn = function(dat) {
 	if (++CommandIdx == 2) {
 		AddLog("NoteOn");	
-		$("#console").val("");
 		Command = CommandEnum.Nothing;	
 	}
 };
