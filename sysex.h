@@ -85,10 +85,13 @@
       группа
 0x11  Возврат параметров крутилки входа
       номер модуля, номер входа
-      такущее АЦП, value
+      текущее АЦП старший, текущее АЦП младший
+      value
       velocity1 старший, velocity1 младший
       velocity127 старший, velocity127 младший
       гистерезис
+      тип крутилки
+      show
 //
 0xF0
 0x7D - non commercial
@@ -255,10 +258,13 @@ velocity127 старший, velocity127 младший
 */  
   byte arr[]={SYSEX_ID, 0x11, 
   cfg.module, idx, 
-  krutilka[idx].adc, krutilka[idx].value,
+  krutilka[idx].adc >> 7, krutilka[idx].adc & 0b01111111, 
+  krutilka[idx].value,
   krutilka[idx].velocity1 >> 7, krutilka[idx].velocity1 & 0b01111111,
   krutilka[idx].velocity127 >> 7, krutilka[idx].velocity127 & 0b01111111,
-  krutilka[idx].gist
+  krutilka[idx].gist,
+  krutilka[idx].type,
+  krutilka[idx].show
   };
   send_SysEx(sizeof(arr), arr);  
   delay(2);  // ToDo пока просто ждем время, но надо контролировать буфер передачи

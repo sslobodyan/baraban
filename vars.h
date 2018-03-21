@@ -154,6 +154,7 @@ struct stKrutilka {
   uint8_t show; // (0-молчать,1-вывод текущего уровня)
   uint8_t pusto; // // выровнять размер структуры на 16 бит !!!
   uint16_t adc; // текущее значение по АЦП
+  byte type; //
 } krutilka[ KRUTILKI_CNT ];
 
 uint8_t krutilka_idx; // текущая обрабатываемая крутилка

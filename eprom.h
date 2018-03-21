@@ -62,20 +62,24 @@ void read_krutilka_from_eprom(void) { // считать в структуру cf
   }
 }
 
-uint16_t save_kanal_to_eprom(void) { // записать kanal в свою область
+uint16_t save_kanal_to_eprom(void) { // записать kanal в 124-125 страницы
+  // каналы храним в 124-125 страницах
   uint32_t addr = (uint32_t) 0x8000000UL + 124*1024 ;
   uint16_t data;
   uint16_t* ptr;
   uint16_t stat;
+  byte res;
   // полностью затираем 2 страницы
-  DBGserial.print("Erase 0x");
-  DBGserial.print(addr);
-  DBGserial.print(" = ");
-  DBGserial.println( FLASH_ErasePage(addr) );
-  DBGserial.print("Erase 0x");
-  DBGserial.print(addr + 1024);
-  DBGserial.print(" = ");
-  DBGserial.println( FLASH_ErasePage(addr + 1024) );
+  //DBGserial.print("Erase 0x");
+  //DBGserial.print(addr);
+  //DBGserial.print(" = ");
+  res = FLASH_ErasePage(addr);
+  //DBGserial.println( res );
+  //DBGserial.print("Erase 0x");
+  //DBGserial.print(addr + 1024);
+  //DBGserial.print(" = ");
+  res = FLASH_ErasePage(addr + 1024);
+  //DBGserial.println( res );
   // теперь пишем в нее весь массив
   ptr = (uint16_t*) kanal;
   for (int i = 0; i < sizeof(kanal) / sizeof(int16_t) ; i++) {
@@ -93,7 +97,7 @@ uint16_t save_kanal_to_eprom(void) { // записать kanal в свою об�
   return stat;
 }
 
-void read_kanal_from_eprom(void) { // считать в структуру cfg
+void read_kanal_from_eprom(void) { // считать в kanal
   uint32_t addr = (uint32_t) 0x8000000UL + 124*1024 ;
   uint16_t data;
   uint16_t* ptr;

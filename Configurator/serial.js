@@ -35,7 +35,7 @@ var ConnectComplete = function(connectionInfo) {
   $("#Piezos").load("piezos.html");
   $("#Pots").load("pots.html", function() { setupPots(); } ); 
 
-  AddLog('Connection opened with id: ' + connectionId + ', Bitrate: ' + connectionInfo.bitrate);
+  //AddLog('Connection opened with id: ' + connectionId + ', Bitrate: ' + connectionInfo.bitrate);
   
 };
 
@@ -47,11 +47,11 @@ var onReceive = function(receiveInfo) {
 
 var onReceiveError = function(errorInfo) {
   if (errorInfo.connectionId === connectionId) {
-    AddLog(errorInfo.error);
+    //AddLog(errorInfo.error);
 	chrome.serial.flush(connectionId, function(result) {});
 	chrome.serial.getInfo(connectionId, function (connectionInfo) {
 		if ( connectionInfo.paused ) {
-			AddLog("Unpaused");
+			//AddLog("Unpaused");
 			chrome.serial.setPaused(connectionId, false, function (){} );
 		}		
 	} );
@@ -63,7 +63,7 @@ var doDisconnect = function() {
     throw 'Invalid connection';
   }
   chrome.serial.disconnect(connectionId, function(result) {
-	  AddLog('Connection with id: ' + connectionId + ' closed. Result='+result);
+	  //AddLog('Connection with id: ' + connectionId + ' closed. Result='+result);
   });
 
   $("button#open").html("Open Port");

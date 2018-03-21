@@ -318,7 +318,6 @@ void setPedalMetronome10( uint8_t value ) {
   }
 }
 
-
 void set_handl(uint8_t tp) { // назначаем глобальной переменной обработчик крутилки
   switch ( tp ) {
     case PEDAL_SUSTAIN: handl = setPedalSustain; break;
@@ -346,8 +345,10 @@ void krutilka_set_type(uint8_t idx, uint8_t tp) { // назначаем крут
     if (tp > 0) {
       set_handl(tp);
       krutilka[ idx ].onChange = handl;
+      krutilka[ idx ].type = tp;
     } else {
       krutilka[ idx ].onChange = NULL;
+      krutilka[ idx ].type = 0;
     }
   }
 }
@@ -369,6 +370,7 @@ void setup_krutilki() { // задать начальные параметры к
   for( byte i=0; i<KRUTILKI_CNT; i++) {
     krutilka[i].onChange = NULL;
     krutilka[i].gist = 32;
+    krutilka[i].type = 0;
     //krutilka[i].mx = i / 2;
     //krutilka[i].ch = i & 0b001;
     if (i<8) {
