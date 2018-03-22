@@ -13,7 +13,10 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     krutilka[ krutilka_idx ].value = new_value;
     // если есть обработчик, то выполнить его
     if ( krutilka[ krutilka_idx ].onChange != NULL ) {
-      krutilka[ krutilka_idx ].onChange( new_value );
+      if (krutilka[ krutilka_idx ].prevCC != new_value) {
+        krutilka[ krutilka_idx ].prevCC = new_value;
+        krutilka[ krutilka_idx ].onChange( new_value );
+      }
     }
     // если запросили вывод SysEx о состоянии крутилок
     if ( krutilka[ krutilka_idx ].show ) {
@@ -71,7 +74,7 @@ void setPotMuteCnt( uint8_t value ) {
 
 void setPotScanCnt( uint8_t value ) { 
   byte old = cfg.scan_cnt;
-  cfg.scan_cnt = value;
+  cfg.scan_cnt = value / 8;
   if ( old != cfg.scan_cnt ) {
     MIDI_Master.sendControlChange( CC_SCAN_CNT, value, DRUMS );
     if (cfg.show_debug) {
@@ -82,7 +85,7 @@ void setPotScanCnt( uint8_t value ) {
 
 void setPotCrossCnt( uint8_t value ) { 
   byte old = cfg.cross_cnt;
-  cfg.cross_cnt = value;
+  cfg.cross_cnt = value / 16;
   if ( old != cfg.cross_cnt ) {
     MIDI_Master.sendControlChange( CC_CROSS_CNT, value, DRUMS );
     if (cfg.show_debug) {
@@ -335,6 +338,9 @@ void set_handl(uint8_t tp) { // назначаем глобальной пере
     case POT_METRONOM: handl = setPotMetronom; break;
     case PEDAL_METRONOM1: handl = setPedalMetronome1; break;
     case PEDAL_METRONOM10: handl = setPedalMetronome10; break;
+    case POT_SCAN_CNT: handl = setPotScanCnt; break;
+    case POT_MUTE_CNT: handl = setPotMuteCnt; break;
+    case POT_CROSS_CNT: handl = setPotCrossCnt; break;
     
     deafult: handl = NULL ;
   }

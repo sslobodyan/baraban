@@ -183,6 +183,7 @@ byte idx_note=0;
 void start_autotreshold() {
   scan_autotreshold = true;
   time_autotreshold = millis();
+  RED_ON;
   DBGserial.println("Gather noise for treshold calculate .. ");
 }
 

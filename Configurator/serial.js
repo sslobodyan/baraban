@@ -1,4 +1,6 @@
 var connectionId;
+const waitTime = 20;
+
 
 var LedOff = function() {
 	$("#led").css("background", "grey");	
@@ -29,14 +31,13 @@ var ConnectComplete = function(connectionInfo) {
   chrome.serial.onReceiveError.addListener(onReceiveError);
 
   $("button#open").html("Close Port");
-  $("#cmdLine").show();
 
   $("#Global").load("global.html");
-  $("#Piezos").load("piezos.html");
+  $("#Piezos").load("piezos.html", function() { setupPiez(); } );
   $("#Pots").load("pots.html", function() { setupPots(); } ); 
 
-  //AddLog('Connection opened with id: ' + connectionId + ', Bitrate: ' + connectionInfo.bitrate);
-  
+  //$("#cmdLine").show();
+
 };
 
 var onReceive = function(receiveInfo) {
@@ -67,7 +68,7 @@ var doDisconnect = function() {
   });
 
   $("button#open").html("Open Port");
-  $("#cmdLine").hide();
+  //$("#cmdLine").hide();
 
   $("#Global").load("noconn.html");
   $("#Piezos").load("noconn.html");
@@ -77,7 +78,40 @@ var doDisconnect = function() {
   
 };
 
+var logSendCommand =  function( dat ){
+	var s=" -> Send ";
+	for (var i=0; i<dat.length; i++) s += dat[i] + ",";
+	AddLog( s );	
+}
+
+
+var CloseAllConnections = function() {
+	// закрыть все предыдущие соединения - может быть зависшая сессия
+	//console.log( "CloseAllConnections" );
+	chrome.serial.getConnections(function(info){
+		cc = info;
+	    var cnt = cc.length;
+		if (cnt>0) {
+			for( var i=0; i<cnt; i++) {
+				var id = cc[i].connectionId;		
+				chrome.serial.disconnect(id, function(result) {
+					console.log("Closed connection "+id);
+			  	});
+			}
+		}
+
+	});
+}
+
+
 $(document).ready(function() {
+
+	CloseAllConnections();
+
+    $("#home").load("home.html", function() {  
+		homeSetup();
+		console.log("home loaded");
+	}); 
 
     chrome.serial.getDevices(function(devices) {
 		if ( devices.length < 1 ) {
@@ -94,21 +128,12 @@ $(document).ready(function() {
 			$('button#open').data("tag",0);
             var port = $('select#portList').val();
 			//connection.connect(port, 115200);
-			chrome.serial.connect(port, {bitrate: 115200}, ConnectComplete)
+			chrome.serial.connect(port, { bitrate: 115200 }, ConnectComplete)
         } else {
 			$('button#open').data("tag",1);
             doDisconnect();
         }
 
     });
-	
-	$('button#send').click(function() {
-		var line1 = ($("#Textfield").val() + "                ").slice(0,16);
-		chrome.serial.send(connectionId,line1, function( sendInfo ) {} );
-    });
-	
-	$('button#clear').click(function() {
-		$("#console").val("");
-    });
-
+		
 });

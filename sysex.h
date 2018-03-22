@@ -8,6 +8,7 @@
       velocity1 старший, младший
       velocity127 старший, младший
       gist
+      show
 0x02_ Задать тип вывода информации сработавшего канала
       0x02
       номер_входа (127-все)
@@ -22,11 +23,15 @@
       0x05
       номер_входа (127-все)
       состояние (0-молчать,1-вывод текущего уровня)
-0x06_ Задать уровень порога для пьезо-входа (treshold)
+0x06_ Задать параметры для пьезо-входа 
       0x06
       номер_входа (127-все)
-      уровень трешолда старших 7 бит
-      уровень трешолда младших 7 бит
+      уровень трешолда старших 7 бит, уровень трешолда младших 7 бит
+      velocity1 старших 7 бит, velocity1 младших 7 бит
+      velocity127 старших 7 бит, velocity127 младших 7 бит
+      нота
+      группа
+      show
 0x09_ Максимальный номер программы
       0x09
       максимальный номер      
@@ -76,6 +81,8 @@
       номер_модуля
       номер_входа
       уровень крутилки
+      уровень АЦП старший
+      уровень АЦП младший      
 0x10_ Возврат параметров аналогового входа
       номер модуля, номер входа
       порог старший, порог младший
@@ -83,6 +90,7 @@
       velocity1 старший, velocity1 младший
       velocity127 старший, velocity127 младший
       группа
+      show
 0x11  Возврат параметров крутилки входа
       номер модуля, номер входа
       текущее АЦП старший, текущее АЦП младший
@@ -111,6 +119,7 @@ void set_type_krutilka_01(byte * array, unsigned array_size) { // 0x01 Назн�
       krutilka[i].velocity1 = array[6] << 7 | array[7];
       krutilka[i].velocity127 = array[8] << 7 | array[9];
       krutilka[i].gist = array[10];
+      krutilka[i].show = array[11];
     }
   } else {
     if ( array[4] < KRUTILKI_CNT ) {
@@ -118,6 +127,7 @@ void set_type_krutilka_01(byte * array, unsigned array_size) { // 0x01 Назн�
       krutilka[array[4]].velocity1 = array[6] << 7 | array[7];
       krutilka[array[4]].velocity127 = array[8] << 7 | array[9];
       krutilka[array[4]].gist = array[10];
+      krutilka[array[4]].show = array[11];
     }
   }
 }
@@ -150,8 +160,10 @@ void send_sysex_krutilka_08(uint8_t idx) { // выслать состояние 
       номер_модуля
       номер_входа
       уровень крутилки
+      уровень АЦП старший
+      уровень АЦП младший
 */  
-  byte arr[]={SYSEX_ID, 0x08, cfg.module, idx, krutilka[idx].value};
+  byte arr[]={SYSEX_ID, 0x08, cfg.module, idx, krutilka[idx].value, krutilka[idx].adc >> 7, krutilka[idx].adc & 0b01111111};
   send_SysEx(sizeof(arr), arr);
 }
 
@@ -179,9 +191,21 @@ void set_treshold_06(byte * array, unsigned array_size) { // 0x06 Задать �
   if (array[4] == 127) {
     for (byte i=0; i<NUM_CHANNELS; i++) {
       kanal[i].treshold = array[5] << 7 | array[6];
+      kanal[i].velocity1 = array[7] << 7 | array[8];
+      kanal[i].velocity127 = array[9] << 7 | array[10];
+      kanal[i].note = array[11];
+      kanal[i].group = array[12];
+      kanal[i].show = array[13];
     }
   } else {
-    if ( array[4] < NUM_CHANNELS ) kanal[ array[4] ].treshold = array[5] << 7 | array[6];
+    if ( array[4] < NUM_CHANNELS ) {
+      kanal[ array[4] ].treshold = array[5] << 7 | array[6];
+      kanal[ array[4] ].velocity1 = array[7] << 7 | array[8];
+      kanal[ array[4] ].velocity127 = array[9] << 7 | array[10];
+      kanal[ array[4] ].note = array[11];
+      kanal[ array[4] ].group = array[12];
+      kanal[ array[4] ].show = array[13];
+    }
   }      
 }
 
@@ -226,14 +250,16 @@ void send_analog_params_10( byte idx ) {
 velocity1 старший, velocity1 младший
 velocity127 старший, velocity127 младший
 группа
+show
 */  
   byte arr[]={SYSEX_ID, 0x10, 
   cfg.module, idx, 
-  kanal[idx].treshold >> 7, kanal[idx].treshold & 0b01111111,
+  kanal[idx].treshold >> 7 & 0b01111111 , kanal[idx].treshold & 0b01111111,
   kanal[idx].note,
-  kanal[idx].velocity1 >> 7, kanal[idx].velocity1 & 0b01111111,
-  kanal[idx].velocity127 >> 7, kanal[idx].velocity127 & 0b01111111,
-  kanal[idx].group
+  kanal[idx].velocity1 >> 7 & 0b01111111, kanal[idx].velocity1 & 0b01111111,
+  kanal[idx].velocity127 >> 7 & 0b01111111, kanal[idx].velocity127 & 0b01111111,
+  kanal[idx].group,
+  kanal[idx].show
   };
   send_SysEx(sizeof(arr), arr);  
   delay(2);  // ToDo пока просто ждем время, но надо контролировать буфер передачи

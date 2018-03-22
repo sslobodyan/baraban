@@ -3,18 +3,23 @@
   <head>
  
 	<script src="jquery-3.2.1.js"></script>
-    <script src="bootstrap.min.js"></script>
+    <script src="bs/js/bootstrap.min.js"></script>
 	<script src="serial.js"></script>
 	<script src="pots.js"></script>
 	<script src="midi.js"></script>
+	<script src="piezos.js"></script>
+	<script src="home.js"></script>
+    <script src="bs/js/bootstrap-slider.min.js"></script>
 
-    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="bs/css/bootstrap.min.css">
+    <link rel="stylesheet" href="custom.css">
+    <link rel="stylesheet" href="bs/css/bootstrap-slider.min.css">
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="container small">
 	<div id="led" style="width:10px;
         height: 10px;
 		border-radius: 5px;
@@ -25,33 +30,24 @@
 		top: 1em;
 		">
 	</div>
-  	<h3>
-	Configurator
-	</h3>
-
-	<select id="portList"></select>
-	<button id="open" data-tag="1" >Open connection</button>
+	<div>
+	  	<h4>
+		Configurator
+		</h4>
+		<select id="portList"></select>
+		<button id="open" data-tag="1" >Open connection</button>
+	</div>
 
 	<ul class="nav nav-tabs">
-	  <li class="active"><a data-toggle="tab" href="#home">Log</a></li>
-	  <li><a data-toggle="tab" href="#Global">Global</a></li>
-	  <li><a data-toggle="tab" href="#Piezos">Piezos</a></li>
-	  <li><a data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
+	  <li class="nav-item active"><a class="nav-link" data-toggle="tab" href="#home">Log</a></li>
+	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Global">Global</a></li>
+	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Piezos">Piezos</a></li>
+	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
 	</ul>
 
   <div class="tab-content">
+
     <div id="home" class="tab-pane fade in active">
-
-	<div id="cmdLine" style="display:none;">
-		<input maxlength="16" size="16" id="Textfield"></input>
-		<input maxlength="16" size="16" id="Textfield2"></input>
-		<button id="send">Send</button>
-		
-		<p>Console</p>
-		<textarea rows="15" cols="80" id="console"></textarea>
-		<button id="clear">clear</button>
-	</div>                                                      	
-
     </div>
 
     <div id="Global" class="tab-pane fade">

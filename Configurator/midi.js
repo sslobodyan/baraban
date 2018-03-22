@@ -131,9 +131,16 @@ var doSysEx = function(dat) {
 };
 
 var doControlChange = function(dat) {
+    midiNote[CommandIdx] = dat;	
+	if (++CommandIdx == 2) {
+		Command = CommandEnum.Nothing;	
+		handlerCC(midiNote[0],midiNote[1]);
+	}
 };
 
 var doProgramChange = function(dat) {
+	AddLog("Programm "+dat);
+	Command = CommandEnum.Nothing;	
 };
 
 var SysExHandler = function() {
@@ -141,68 +148,30 @@ var SysExHandler = function() {
 		case 0x11:
 				handler_11();
 				break;
-		
+		case 0x08:
+				handler_08();
+				break;
+		case 0x07:
+				handler_07();
+				break;
+		case 0x10:
+				handler_10();
+				break;
+		default:
+				handler_other();
 	}
 }
 
-var getTypePot = function(tp) {
-	switch (tp) {
-		case 110: return("POT_VELOCITY1"); break;
-		case 111: return("POT_VELOCITY127"); break;
-		case 112: return("POT_LENGTH0"); break;
-		case 119: return("POT_LENGTH1"); break;
-		case 113: return("POT_VOLUME"); break;
-		case 120: return("POT_VOLUME_METRONOM"); break;
-		case 121: return("POT_MUTE_CNT"); break;
-		case 122: return("POT_SCAN_CNT"); break;
-		case 123: return("POT_CROSS_CNT"); break;
-		case 124: return("POT_CROSS_PRCNT"); break;
-		case 125: return("POT_METRONOM"); break;
-		case 109: return("PEDAL_AUTOTRESHOLD"); break;
-		case 114: return("PEDAL_SUSTAIN"); break;
-		case 115: return("PEDAL_VOICE"); break;
-		case 116: return("PEDAL_OCTAVE"); break;
-		case 117: return("PEDAL_PROGRAM"); break;
-		case 118: return("PEDAL_PANIC"); break;
-		case 126: return("PEDAL_METRONOM1"); break;
-		case 127: return("PEDAL_METRONOM10"); break;
-		case 0: return("No Defined"); break;
-		default: return(""); break;
-	}
-}
 
-var getOptionTypePot = function(tp, sel) {
-	var s = getTypePot(tp);
-	if ( s != "" )	return( '<option value='+tp+'>' + s + '</option>' );
-	else return("");
-}
-
-var getSelectTypePot=function(tp) {
-	var s='<select>';
-	for (var i=0; i<128; i++) {
-		var sel = '';
-		if ( i == tp ) sel = 'selected="selected"';
-		var opt = getOptionTypePot(i, sel);
-		if ( opt != '' ) s += opt;
-	}
-    s += '</select>';
-	return( s );
-}
-
-var getValuePot = function( dat ) {
-	var perc = dat / 128 * 100;
-	perc = perc.toPrecision(1);
-   var s = '<div class="progress" style="width:50px"><div class="progress-bar" role="progressbar" style="width:'+perc+'%">'+ dat +'</div></div>';
-	return (s);
-}
-
-var handler_11 = function() {
+var handler_11 = function() { // параметры крутилки
 	var id = midiSysEx[4];
 	var adc = (midiSysEx[5] << 7) + midiSysEx[6];
     var value = getValuePot( midiSysEx[7] );
-	var vel1 = (midiSysEx[8] << 7) + midiSysEx[9];
-	var vel127 = (midiSysEx[10] << 7) + midiSysEx[11];
-    var gist = midiSysEx[12];
+    var t1=((midiSysEx[8] << 7) + midiSysEx[9]) ;
+	var vel1 = '<input style="width:60px" type="number" value="'+t1+'">';
+    var t127=((midiSysEx[10] << 7) + midiSysEx[11]) ;
+	var vel127 = '<input style="width:60px" type="number" value="'+t127+'">';
+    var gist = '<input style="width:60px" type="number" value="'+midiSysEx[12]+'">';
     var typ = getSelectTypePot( midiSysEx[13] );
     var show_check = '';
 	if (midiSysEx[14]) show_check = 'checked';
@@ -219,3 +188,68 @@ var handler_11 = function() {
 		 t.find(".potShow").html(show);
 	}
 }
+
+var handler_08 = function() {
+	var id = midiSysEx[4];
+    var value = getValuePot( midiSysEx[5] );
+	var adc = (midiSysEx[6] << 7) + midiSysEx[7];
+    t = $("#trPot_"+id);
+	if (t) {
+		 t.find(".potValue").html(value);
+		 t.find(".potAdc").html(adc);
+	}
+}
+
+var handler_10 = function() { // параметры пьеза
+
+	var id = midiSysEx[4];
+
+    var t=((midiSysEx[5] << 7) + midiSysEx[6]) ;
+	var treshold = '<input style="width:60px" type="number" value="'+t+'">';
+
+    var note = '<input style="width:60px" type="number" value="'+midiSysEx[7]+'">';
+
+    var t1=((midiSysEx[8] << 7) + midiSysEx[9]) ;
+	var vel1 = '<input style="width:60px" type="number" value="'+t1+'">';
+
+    var t127=((midiSysEx[10] << 7) + midiSysEx[11]) ;
+	var vel127 = '<input style="width:60px" type="number" value="'+t127+'">';
+
+    var group = '<input style="width:60px" type="number" value="'+midiSysEx[12]+'">';
+
+    var show_check = '';
+	if (midiSysEx[13]) show_check = 'checked';
+	var show = '<input type="checkbox" ' + show_check +'>';
+
+    t = $("#trPiez_"+id);
+	if (t) {
+		 t.find(".piezNote").html(note);
+		 t.find(".piezVel1").html(vel1);
+		 t.find(".piezVel127").html(vel127);
+		 t.find(".piezTresh").html(treshold);
+		 t.find(".piezGroup").html(group);
+		 t.find(".piezShow").html(show);
+	}
+}
+
+var handler_07 = function() {
+	var id = midiSysEx[4]; // номер входа
+	var adc = (midiSysEx[5] << 7) + midiSysEx[6];
+    t = $("#trPiez_"+id);
+	if (t) {
+		 t.find(".piezAdc").html( getValuePiez(adc) );
+	}
+}
+
+var handlerCC = function(ccNum, ccVal) { // пришел Control Change
+	AddLog("CC "+ccNum+" = "+ccVal);	
+	var s = $("#cc_"+ccNum+" input");
+	if (s) {
+		s.slider('setValue',ccVal);
+	}
+}
+
+var handler_other = function() {
+	AddLog("Unknown SysEx");
+}
+

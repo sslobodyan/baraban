@@ -12,16 +12,16 @@
 // собственные команды
 #define CC_NOTE_LENGTH0 3
 #define CC_NOTE_LENGTH1 9
-#define CC_VOICE_PEDAL 69 // 0-63-127
-#define CC_SHIFT_OCTAVE 70 // ==64 - не сдвигать
-#define CC_VELOCITY1 71 // 
-#define CC_VELOCITY127 72 // 
-#define CC_MUTE_CNT 73 // 
-#define CC_SCAN_CNT 74 // 
-#define CC_CROSS_CNT 75 // 
-#define CC_CROSS_PRCNT 76 //
-#define CC_METRONOM 77 //
-#define CC_AUTOTRESHOLD 78 //
+#define CC_VOICE_PEDAL 102 // 0-63-127
+#define CC_SHIFT_OCTAVE 103 // ==64 - не сдвигать
+#define CC_VELOCITY1 104 // 
+#define CC_VELOCITY127 105 // 
+#define CC_MUTE_CNT 106 // 
+#define CC_SCAN_CNT 107 // 
+#define CC_CROSS_CNT 108 // 
+#define CC_CROSS_PRCNT 109 //
+#define CC_METRONOM 110 //
+#define CC_AUTOTRESHOLD 111 //
 
 
 struct MySettings : public midi::DefaultSettings
@@ -120,6 +120,10 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
 
   if (level == 0) return false;
 
+  if (kanal[ch].show) {
+    send_sysex_kanal_07( ch, level );
+  }
+
   // определить каким голосом играть ноту в зависимости от датчика касания и педали сустейна, а также сдвига голосов
   if ( cfg.pedal > 42 ) { // педаль или полупедаль
     voice = 1; 
@@ -163,7 +167,7 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
     kanal[ch].noteoff_time = millis() + time_to_off;
     //digitalWrite(PC15, LOW);
   }
-
+ 
 #define SHOW_NOTE_ON
 
   #ifdef SHOW_NOTE_ON

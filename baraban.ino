@@ -132,6 +132,7 @@ void main_loop(){
       store_autotreshold(); // набираем максимумы по каналам
       if (  millis() - time_autotreshold >= cfg.autotreshold_time ) { // прошло время автотрешолда
         scan_autotreshold = false;
+        RED_OFF;
         for (byte i=0; i<NUM_CHANNELS; i++) {
           kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
           kanal[i].velocity1 = kanal[i].treshold + 50;
