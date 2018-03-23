@@ -22,6 +22,7 @@
 #define CC_CROSS_PRCNT 109 //
 #define CC_METRONOM 110 //
 #define CC_AUTOTRESHOLD 111 //
+#define CC_METRONOM_VOLUME 112 //
 
 
 struct MySettings : public midi::DefaultSettings
@@ -43,24 +44,29 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
                       break;
       case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value * 100;
                       break;
-      case CC_VOICE_PEDAL: cfg.pedal_voice = value;
+      case CC_VOICE_PEDAL: 
+                      if (value < 42) cfg.pedal_voice = cfg.delta_voice;
+                      else if (value > 85) cfg.pedal_voice = cfg.delta_voice * 2;
+                      else cfg.pedal_voice = 0;
                       break;                      
       case CC_VELOCITY1: cfg.velocity1 = value * 8;
                       break;
       case CC_VELOCITY127: cfg.velocity127 = value * 8;
                       break;
-      case CC_SCAN_CNT: cfg.scan_cnt = value;
+      case CC_SCAN_CNT: cfg.scan_cnt = value / 8;
                       break;
-      case CC_CROSS_CNT: cfg.cross_cnt = value;
+      case CC_CROSS_CNT: cfg.cross_cnt = value / 16;
                       break;
-      case CC_MUTE_CNT: cfg.mute_cnt = value * 4;
+      case CC_MUTE_CNT: cfg.mute_cnt = value * 8;
                       break;
       case CC_CROSS_PRCNT: cfg.cross_percent = value;
                       break;     
       case CC_METRONOM: cfg.metronom = 60000 / map(value, 0, 127, METRONOME_MIN, METRONOME_MAX) ;
                       break;      
       case CC_AUTOTRESHOLD: if (value == PEDAL_DOWN) start_autotreshold();
-                      break;                                                      
+                      break; 
+      case CC_METRONOM_VOLUME: cfg.metronom_volume = value;
+                      break; 
       default: break;
     }
 }
@@ -124,9 +130,9 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
     send_sysex_kanal_07( ch, level );
   }
 
+  voice = 1; 
   // определить каким голосом играть ноту в зависимости от датчика касания и педали сустейна, а также сдвига голосов
   if ( cfg.pedal > 42 ) { // педаль или полупедаль
-    voice = 1; 
     if ( cfg.pedal < 85 ) { // полупедаль
       time_to_off = cfg.noteoff_time1;   
     } else {
@@ -147,6 +153,8 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
   int16_t vel1 = kanal[ch].velocity1+cfg.velocity1;
   int16_t vel127 = kanal[ch].velocity127-cfg.velocity127;
 
+  if (vel1 + 16 > vel127) vel127 = vel1 + 16; // чтобы остался хоть маленький зазор
+
   // по границам определяем уровень
   int16_t velocity = map( level , vel1, vel127, 1, 127);
   if (velocity > 126) velocity=127;
@@ -158,7 +166,8 @@ bool note_on(byte idx) { // играть ноту по индексу из бу�
   } else {
     pinMode(PC15, OUTPUT);
     digitalWrite( PC15,  !digitalRead(PC15) );
-    if ( voice != cfg.voice ) {
+    if (( voice != cfg.voice ) || ( millis()-time_voice > 500)) {
+      time_voice = millis();
       cfg.voice = voice; // запомним текущий голос для уменьшения трафика
       MIDI_Master.sendControlChange( CC_VOICE, voice, DRUMS ); // смена голоса  
     }

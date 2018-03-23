@@ -63,7 +63,7 @@ void setPotCrossPercent( uint8_t value ) {
 
 void setPotMuteCnt( uint8_t value ) { 
   byte old = cfg.mute_cnt;
-  cfg.mute_cnt = value * 4;
+  cfg.mute_cnt = value * 8;
   if ( old != cfg.mute_cnt ) {
     MIDI_Master.sendControlChange( CC_MUTE_CNT, value, DRUMS );
     if (cfg.show_debug) {
@@ -135,11 +135,20 @@ void setPedalSustain( uint8_t value ) { // обработчик 1 крутилк
 
 void setPedalVoice( uint8_t value ) {
   byte old = cfg.pedal_voice;
-  if (value < 42) cfg.pedal_voice = cfg.delta_voice;
-  else if (value > 85) cfg.pedal_voice = cfg.delta_voice * 2;
-  else cfg.pedal_voice = 0;
+  if (value < 42) {
+    cfg.pedal_voice = cfg.delta_voice;
+    value = PEDAL_DOWN;
+  }
+  else if (value > 85) {
+    cfg.pedal_voice = cfg.delta_voice * 2;
+    value = PEDAL_UP;
+  }
+  else {
+    cfg.pedal_voice = 0;
+    value = PEDAL_CENTER;
+  }
   if ( old != cfg.pedal_voice ) {
-    MIDI_Master.sendControlChange( CC_VOICE_PEDAL, cfg.pedal_voice, DRUMS );
+    MIDI_Master.sendControlChange( CC_VOICE_PEDAL, value, DRUMS );
     if (cfg.show_debug) {
       DBGserial.print("MultiVoice=");DBGserial.println( cfg.pedal_voice ); // ToDo Debug
     }
@@ -239,7 +248,7 @@ void setPotVelocity127( uint8_t value ) {
   uint16_t old = cfg.velocity127;
   cfg.velocity127 = (uint16_t) value * 8;
   if ( old != cfg.velocity127 ) {
-    MIDI_Master.sendControlChange( CC_VELOCITY127, cfg.velocity127, DRUMS );
+    MIDI_Master.sendControlChange( CC_VELOCITY127, value, DRUMS );
     if (cfg.show_debug) {
       DBGserial.print("Velocity127=");DBGserial.println( cfg.velocity127 ); // ToDo Debug
     }
@@ -265,6 +274,7 @@ void setPotVolumeMetronome( uint8_t value ) {
   }
   if ( value != cfg.metronom_volume ) {
     cfg.metronom_volume = value;
+    MIDI_Master.sendControlChange( CC_METRONOM_VOLUME, cfg.metronom_volume, DRUMS );
     if (cfg.show_debug) {
       DBGserial.print("Metronome Volume=");DBGserial.println( cfg.metronom_volume ); // ToDo Debug
     }

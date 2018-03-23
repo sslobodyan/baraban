@@ -1,12 +1,3 @@
-/* обработка вход€щих ћ»ƒ» сообщений */
-
-
-
-/*
-если текущий бат управл€ющий - определ€ем класс команды
-иначе передаем байт в предыдущий класс
-*/
-
 var CommandEnum = {
   Nothing: 0,
   NoteOn: 9,
@@ -16,15 +7,20 @@ var CommandEnum = {
   ProgramChange:12
 };
 
-Command = CommandEnum.Nothing;
-CommandIdx = 0;
+var Command = CommandEnum.Nothing;
+var CommandIdx = 0;
+var midiNote = new Array(10);
+
 
 var doMidiHandler = function(buf) {
   if (buf) {
     //console.log(buf);
     s = buf;
-	//for (var i=0; i<buf.length; i++) {
+
+	//var l=""; //for (var i=0; i<buf.length; i++) {l+=buf[i]+",";}  AddLog(l);
+
 	while ( buf.length > 0 ) {
+		//l+=buf[0]+",";
 		if ( buf[0] > 127 ) { // управл€ющий код
 				//LedOn();
 				switch ( buf[0] >> 4 ) {
@@ -95,18 +91,28 @@ var doMidiHandler = function(buf) {
 		// убираем обработанный байт
 		buf = buf.slice(1);
     }
+	//AddLog(l);
   }
 };
 
-midiNote = new Array(3);
-midiCC = new Array();
-midiPC = new Array();
+var deactivateNote = function( dat  ) {
+	dat.css("color","black");
+	//console.log("deactivateNote "+dat);
+}
 
 var doNoteOn = function(dat) {
+	//AddLog("N "+CommandIdx+" > "+dat);
     midiNote[CommandIdx] = dat;
 	if (++CommandIdx == 2) {
 		AddLog("NoteOn "+midiNote[0]+" vel "+midiNote[1]);	
 		Command = CommandEnum.Nothing;	
+	}
+	var t=$("#Piezos").find("[note="+ midiNote[0] +"]");
+	if (t.length > 0) {
+		//console.log(t);
+		t.html(midiNote[1]);
+		t.css("color","red");
+		setTimeout( deactivateNote, 1000, t );
 	}
 };
 
@@ -144,7 +150,7 @@ var doProgramChange = function(dat) {
 };
 
 var SysExHandler = function() {
-	switch ( midiSysEx[2] ) {
+	switch ( midiSysEx[3] ) {
 		case 0x11:
 				handler_11();
 				break;
@@ -156,6 +162,12 @@ var SysExHandler = function() {
 				break;
 		case 0x10:
 				handler_10();
+				break;
+		case 0x14:
+				handler_14();
+				break;
+		case 0x16:
+				handler_16();
 				break;
 		default:
 				handler_other();
@@ -221,14 +233,27 @@ var handler_10 = function() { // параметры пьеза
 	if (midiSysEx[13]) show_check = 'checked';
 	var show = '<input type="checkbox" ' + show_check +'>';
 
+    var gt1=((midiSysEx[14] << 7) + midiSysEx[15]) ;
+    var gt127=((midiSysEx[16] << 7) + midiSysEx[17]);
+	var vmax= (t127-gt127)  - (gt1+t1);
+	if (vmax < 16) vmax = (gt1+t1) + 16;
+	else vmax = t127-gt127;
+	var gvel1_127 = (gt1+t1)+"</br>"+(vmax);
+
     t = $("#trPiez_"+id);
 	if (t) {
 		 t.find(".piezNote").html(note);
+
+		 var nt = t.find(".piezOn");
+		 nt.attr("note", midiSysEx[7] );
+		 nt.html("-");	
+
 		 t.find(".piezVel1").html(vel1);
 		 t.find(".piezVel127").html(vel127);
 		 t.find(".piezTresh").html(treshold);
 		 t.find(".piezGroup").html(group);
 		 t.find(".piezShow").html(show);
+		 t.find(".piezDiapazon").html(gvel1_127);
 	}
 }
 
@@ -241,15 +266,97 @@ var handler_07 = function() {
 	}
 }
 
-var handlerCC = function(ccNum, ccVal) { // пришел Control Change
-	AddLog("CC "+ccNum+" = "+ccVal);	
-	var s = $("#cc_"+ccNum+" input");
+var update_slider = function(ccNum, ccVal) { 
+	if (ccNum == 80) { // смена голоса
+		if (ccVal<10) ccVal = '0'+ccVal;
+		$("#numVoice").html(ccVal);
+	}
+	if (ccNum == 110) { // темп
+		var t= 40.0 + (210.0-40.0) / 128.0 * ccVal;
+	    t = t.toFixed(0);
+		//if (t<100) t = '0'+ccVal;
+		$("#metronomTempo").html(t);
+	}
+	var s = $("#cc_"+ccNum).find("input.slider");
 	if (s) {
+		//console.log(s);
 		s.slider('setValue',ccVal);
+		$(s).next('.ccInput').val(ccVal);
 	}
 }
 
-var handler_other = function() {
-	AddLog("Unknown SysEx");
+var handlerCC = function(ccNum, ccVal) { // пришел Control Change
+	AddLog("CC "+ccNum+" = "+ccVal);	
+	update_slider(ccNum, ccVal);
 }
 
+var handler_other = function() {
+	AddLog("Unknown SysEx "+midiSysEx[3]);
+}
+
+var handler_14 = function() {
+    var t=$("#console");
+	t.val( "Calibrate - freeze!!!\n" );
+}
+
+var handler_16 = function() {
+	AddLog( "Config" );
+	var noteoff0 = midiSysEx[4];
+	update_slider(3, noteoff0);
+
+	var noteoff1 = midiSysEx[5];
+	update_slider(9, noteoff1);
+
+	var sustain = midiSysEx[6];
+	update_slider(64, sustain);
+
+	var ped_voice = midiSysEx[7];
+	update_slider(102, ped_voice);
+
+	var voice = midiSysEx[8];
+	update_slider(102, ped_voice);
+
+	var ped_octave = midiSysEx[9];
+	update_slider(103, ped_octave);
+
+	var ped_program = midiSysEx[10];
+	//update_slider(102, ped_voice);
+
+	var curr_program = midiSysEx[11];
+	//update_slider(102, ped_voice);
+
+	var volume = midiSysEx[12];
+	update_slider(7, volume);
+
+	var cross_cnt = midiSysEx[13];
+	update_slider(108, cross_cnt);
+
+	var vel1 = midiSysEx[14];
+	update_slider(104, vel1);
+
+	var vel127 = midiSysEx[15];
+	update_slider(105, vel127);
+
+	var scan_cnt = midiSysEx[16];
+	update_slider(107, scan_cnt);
+
+	var mute_cnt = midiSysEx[17];
+	update_slider(106, mute_cnt);
+
+	var metronom = midiSysEx[18];
+	update_slider(110, metronom);
+
+	var metronom_value = midiSysEx[19];
+	update_slider(112, metronom_value);
+
+	var metronom_krat = midiSysEx[20];
+	//update_slider(102, ped_voice);
+
+	var cross_perc = midiSysEx[21];
+	update_slider(109, cross_perc);
+
+	var max_level = midiSysEx[22]<<7+midiSysEx[23];
+	var ped_metro1 = midiSysEx[24];
+	var ped_metro10 = midiSysEx[25];
+
+}

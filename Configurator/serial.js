@@ -1,5 +1,6 @@
 var connectionId;
 const waitTime = 20;
+var enableConsoleUpdate=false;
 
 
 var LedOff = function() {
@@ -14,7 +15,7 @@ var LedOn = function() {
 }
 
 var AddLog = function(dat) {
-	$("#console").val( $("#console").val() + dat + "\n" );
+	if (enableConsoleUpdate == true) $("#console").val( $("#console").val() + dat + "\n" );
 }
 
 
@@ -32,11 +33,16 @@ var ConnectComplete = function(connectionInfo) {
 
   $("button#open").html("Close Port");
 
-  $("#Global").load("global.html");
-  $("#Piezos").load("piezos.html", function() { setupPiez(); } );
-  $("#Pots").load("pots.html", function() { setupPots(); } ); 
+	if ( $("#Piezos").html() == '' ) {
+		console.log('Need load');
+		$("#Piezos").load("piezos.html", function() { setupPiez(); } );
+	} else { console.log('Yet loaded '); }
+	if ( $("#Pots").html() == '' ) $("#Pots").load("pots.html", function() { setupPots(); } ); 
+	if ( $("#home").html() == '' ) $("#home").load("home.html", function() { homeSetup(); }); 
 
-  //$("#cmdLine").show();
+  activateTab("home");
+
+  $('.conn').show();
 
 };
 
@@ -68,14 +74,15 @@ var doDisconnect = function() {
   });
 
   $("button#open").html("Open Port");
-  //$("#cmdLine").hide();
 
-  $("#Global").load("noconn.html");
-  $("#Piezos").load("noconn.html");
-  $("#Pots").load("noconn.html");
   $("#led").css("background", "white");
   $("#console").val("");
-  
+
+	$('#Piezos').html('');  
+	$('#Pots').html('');
+	$('#home').html('');
+
+  $('.conn').hide();
 };
 
 var logSendCommand =  function( dat ){
@@ -87,7 +94,6 @@ var logSendCommand =  function( dat ){
 
 var CloseAllConnections = function() {
 	// закрыть все предыдущие соединения - может быть зависшая сессия
-	//console.log( "CloseAllConnections" );
 	chrome.serial.getConnections(function(info){
 		cc = info;
 	    var cnt = cc.length;
@@ -103,15 +109,13 @@ var CloseAllConnections = function() {
 	});
 }
 
+var activateTab = function(tab){
+  $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+};
 
 $(document).ready(function() {
 
 	CloseAllConnections();
-
-    $("#home").load("home.html", function() {  
-		homeSetup();
-		console.log("home loaded");
-	}); 
 
     chrome.serial.getDevices(function(devices) {
 		if ( devices.length < 1 ) {
@@ -127,13 +131,11 @@ $(document).ready(function() {
         if ($(this).data("tag")==1) {
 			$('button#open').data("tag",0);
             var port = $('select#portList').val();
-			//connection.connect(port, 115200);
 			chrome.serial.connect(port, { bitrate: 115200 }, ConnectComplete)
         } else {
 			$('button#open').data("tag",1);
             doDisconnect();
         }
-
     });
 		
 });

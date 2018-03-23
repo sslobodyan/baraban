@@ -1,3 +1,31 @@
+@font-face{
+font-family: 'Segment7Standard';
+src: url('/bs/css/Segment7Standard.otf')  format("opentype");
+font-weight: bold;
+font-style: normal;
+}
+
 textarea#console {
-	font-size: 1em;
+	font-size: 0.85em;
+}
+
+.segment7 {
+   font-family: 'Segment7Standard'; 
+   font-weight: bold; 
+	font-size: 2em;
+   margin-left:10px;
+}
+
+.nameslider {
+	margin-top:14px;
+	margin-bottom:-8px;
+}
+
+td.piezDiapazon {
+	padding:2px;
+	text-align:center;
+}
+
+div.mainHeader {
+	margin-bottom:10px;
 }

@@ -36,7 +36,9 @@ var CreateTablePiez = function() {
 			var s = '<tr '+cl+' id="trPiez_'+i+'" >';
 			s += '<td class="piezId">'+i+'</td>';
 			s += '<td class="piezNote" ></td>';
-			s += '<td class="piezAdc" ></td>';
+			s += '<td class="piezOn style="width:5%"" ></td>';
+			s += '<td class="piezAdc" style="width:15%"></td>';
+			s += '<td class="piezDiapazon" style="width:6%"></td>';
 			s += '<td class="piezVel1" ></td>';
 			s += '<td class="piezVel127" ></td>';
 			s += '<td class="piezTresh" ></td>';
@@ -100,6 +102,10 @@ var setupPiez = function() {
 
 	var but = document.getElementById('liPiez2532');
 	but.addEventListener('click', ActivatePiez2532);
+
+	setTimeout(CreateTablePiez, 1000);
+
+	console.log('setupPiez');
 }
 
 var ActivatePiez18 = function() {
@@ -129,11 +135,11 @@ var ActivatePiez2532 = function() {
 }
 
 var getValuePiez = function( dat ) {
-	const maxAdc = 1900;
+	const maxAdc = 2000;
 	var perc = dat / maxAdc * 100;
 	perc = perc.toPrecision(1);
 	var dan = '';
-	if (perc > 85) dan = ' bg-warning ';
+	if (dat > 1800) dan = ' bg-warning ';
     var s = '<div class="progress" style="width:50px"><div class="progress-bar '+dan+'" role="progressbar" style="width:'+perc+'%">'+ dat +'</div></div>';
 	return (s);
 }

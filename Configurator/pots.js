@@ -90,6 +90,10 @@ var setupPots = function() {
 
 	var but = document.getElementById('liPot916');
 	but.addEventListener('click', ActivatePot916);
+
+	CreateTablePots();
+
+	console.log('setupPots');
 }
 
 var ActivatePot18 = function() {

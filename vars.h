@@ -174,8 +174,9 @@ uint32_t old_metronom = 0; // время удара метронома
 uint8_t metronom_krat = cfg.metronom_krat-1; // кратность метронома
 volatile bool adc_new_cycle; // выставляется в прерывании при включении 0 мультиплексора (новый цикд)
 
-uint32_t tm_time, time_green, time_red, time_autotreshold;
+uint32_t tm_time, time_green, time_red, time_autotreshold, time_voice;
 
+const byte version[] = __DATE__;
 
 /////////////////////////  Объявления функций //////////////////////////////////////
 

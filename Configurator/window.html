@@ -14,12 +14,13 @@
     <link rel="stylesheet" href="bs/css/bootstrap.min.css">
     <link rel="stylesheet" href="custom.css">
     <link rel="stylesheet" href="bs/css/bootstrap-slider.min.css">
+	<link rel="stylesheet" media="screen" href="bs/css/Segment7Standard.otf" type="text/css"/>
 
 </head>
 
 <body>
 
-<div class="container small">
+<div class="container small" >
 	<div id="led" style="width:10px;
         height: 10px;
 		border-radius: 5px;
@@ -30,35 +31,27 @@
 		top: 1em;
 		">
 	</div>
-	<div>
+	<div class="mainHeader">
 	  	<h4>
 		Configurator
 		</h4>
 		<select id="portList"></select>
-		<button id="open" data-tag="1" >Open connection</button>
+		<button id="open" data-tag="1" class="btn btn-primary" style="width:10em">Open port</button>
+		<span style="margin-left:100px">
+			<button id="saveConfig" class="conn btn btn-danger" style="display:none" >Save config</button>
+		</span>
 	</div>
 
 	<ul class="nav nav-tabs">
-	  <li class="nav-item active"><a class="nav-link" data-toggle="tab" href="#home">Log</a></li>
-	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Global">Global</a></li>
+	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#home">Controllers & Metronome</a></li>
 	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Piezos">Piezos</a></li>
 	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
 	</ul>
 
   <div class="tab-content">
-
-    <div id="home" class="tab-pane fade in active">
-    </div>
-
-    <div id="Global" class="tab-pane fade">
-    </div>
-
-    <div id="Piezos" class="tab-pane fade">
-    </div>
-
-    <div id="Pots" class="tab-pane fade">
-    </div>
-
+    <div id="home" class="tab-pane fade"></div>
+    <div id="Piezos" class="tab-pane fade"></div>
+    <div id="Pots" class="tab-pane fade"></div>
   </div>
 	
 
