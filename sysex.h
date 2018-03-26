@@ -48,9 +48,10 @@
       нота 
 0x0D_ Задать темп метронома в ударах в минуту, громкость и  кратность долей такта
       0x0D
-      темп
+      темп старший, младший
       громкость
       кратность
+      enable
 0x0E_ Запросить параметры аналогового входа по номеру
       0x0E
       номер входа (127 - все)
@@ -62,7 +63,7 @@
       0-отключить, 1-включить
 0x13_ EEPROM      
       0x13
-      0-считать, 1-записать
+      0-считать, 1-записать, 2-version, 13-инит модуля, (72,60,48,36) - задать тип модуля, 20 - dbg_on, 21-dbg_off, 22-metro_enable, 23-metro_disable
 0x14_ Запуск автотрешолда
       0x14
       127-запустить
@@ -132,6 +133,10 @@
       max_level = 1800; // уровень сигнала, когда включаем красный светодиод
       pedal_metronom1 = PEDAL_CENTER; // изменение метронома на 1 bps
       pedal_metronom10 = PEDAL_CENTER; // изменение метронома на 10 bps
+0x17  Version      
+      номер модуля
+      0x17
+      строка с версией
       
 //
 0xF0
@@ -265,14 +270,19 @@ void set_note_0C(byte * array, unsigned array_size) { // 0x0C Номер нот�
 }
 
 void set_metronome_0D(byte * array, unsigned array_size) { // 0x0D_ Задать темп метронома в ударах в минуту, громкость и кратность
-  if ( array[4] == 0 ) {
+  RED_OFF;
+  GREEN_OFF;
+  uint16_t m = array[4] << 7 + array[5];
+  if ( m == 0 ) {
     cfg.metronom = 0;
     return;
   }
-  cfg.metronom = (uint32_t) 60000 / array[4];
-  cfg.metronom_volume = array[5] & 0x7F;
-  cfg.metronom_krat = array[6] & 0x0F;
+  cfg.metronom = (uint32_t) 60000 / m;
+  cfg.metronom_volume = array[6] & 0x7F;
+  cfg.metronom_krat = array[7] & 0x0F;
+  cfg.metronom_enable = array[8];
   metronom_krat = cfg.metronom_krat - 1; // начинаем всегда с сильной доли
+  old_metronom = millis() - cfg.metronom;
 }
 
 void send_analog_params_10( byte idx ) {
@@ -346,7 +356,7 @@ void set_show_debug_12(byte * array, unsigned array_size) { //0x12 cfg.show_debu
     cfg.show_debug = array[4];
 }
 
-void set_eprom_13(byte * array, unsigned array_size) { //0x13 0-читать,1-записать конфигурацию в епром
+void set_eprom_13(byte * array, unsigned array_size) { //0x13 0-читать,1-записать конфигурацию в епром, 2-version, 13-init, 72-36 - set type
     switch (array[4]) {
       case 0:
               read_cfg_from_eprom();
@@ -363,6 +373,49 @@ void set_eprom_13(byte * array, unsigned array_size) { //0x13 0-читать,1-�
               if (cfg.show_debug) {
                 DBGserial.println("Config saved");
               }
+              break;
+      case 2:
+              send_version_17();
+              break;
+      case 13: // 0D
+              setup_module();
+              fill_notes();
+              setup_krutilki();
+              cfg.scan_cnt = 12;
+              cfg.mute_cnt = 560; // количество полных сканирований АЦП для игнора успокаивающегося датчика
+              cfg.cross_percent = 50; // подавлять кросстолк до указанного уровня в процентах от самого сильного сигнала
+              cfg.cross_cnt = 6; // сколько опросов АЦП ждать кросстолк (1 опрос 133 мкс)
+              if (cfg.show_debug) {
+                DBGserial.println("Fill notes");
+              }
+              break;
+      case 20: // 0x14
+              cfg.show_debug = true;
+              break;
+      case 21: // 0x15
+              cfg.show_debug = false;
+              break;
+      case 22: // 0x16
+              cfg.metronom_enable = true;
+              break;
+      case 23: // 0x17
+              cfg.metronom_enable = false;
+              break;
+      case MODULE_72:
+              cfg.module = MODULE_72; cfg.start_note = MODULE_72; cfg.end_note = cfg.start_note + NUM_CHANNELS;
+              fill_notes();
+              break;
+      case MODULE_60:
+              cfg.module = MODULE_60; cfg.start_note = MODULE_60; cfg.end_note = cfg.start_note + NUM_CHANNELS;
+              fill_notes();
+              break;
+      case MODULE_48:
+              cfg.module = MODULE_48; cfg.start_note = MODULE_48; cfg.end_note = cfg.start_note + NUM_CHANNELS;
+              fill_notes();
+              break;
+      case MODULE_36:
+              cfg.module = MODULE_36; cfg.start_note = MODULE_36; cfg.end_note = cfg.start_note + NUM_CHANNELS;
+              fill_notes();
               break;
       default: ;
     }
@@ -400,14 +453,22 @@ void send_config_16() {
   cfg.pedal_metronom10
   };
   send_SysEx(sizeof(arr), arr);  
-  //delay(10);
+  delay(10);
 }
 
 void get_config_15(byte * array, unsigned array_size) { //0x14 1-запустить
     if (array[4] == 127) {
-      //delay(10);
       send_config_16();
     }
+}
+
+void send_version_17(){ //0x17  Version  номер модуля, 0x17, строка с версией
+  byte arr[20]={
+  SYSEX_ID,
+  cfg.module, 0x17 
+  };
+  for (byte i=0; i<sizeof(version); i++) arr[i+3] = version[i];
+  send_SysEx(sizeof(version)+3, arr);   
 }
 
 
@@ -442,7 +503,11 @@ void sysexHanlerMaster(byte * array, unsigned array_size) {
 }
 
 void sysexHanlerSlave(byte * array, unsigned array_size) {
-  DBGserial.print("DBG SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
+  if (cfg.show_debug) {
+    DBGserial.print("DBG SysEx = 0x");DBGserial.println( array[3], HEX ); // ToDo Debug
+  }
+  glo_SysExMaster = false;
   sysexHanlerMaster(array,array_size); 
+  glo_SysExMaster = true;
 }
 

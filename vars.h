@@ -46,24 +46,23 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 #define LAST_NOTE 109 // последняя нота как нота - следующие это крутилки
 
 // на каких номерах нот какие обработчики крутилок
+#define PEDAL_AUTOTRESHOLD 109 // 0x6D
 #define POT_VELOCITY1 110
 #define POT_VELOCITY127 111
 #define POT_LENGTH0 112   // 0x70
-#define POT_LENGTH1 119   // 0x77
 #define POT_VOLUME 113    // 0x71
+#define PEDAL_SUSTAIN 114 // 0x72
+#define PEDAL_VOICE 115   // 0x73
+#define PEDAL_OCTAVE 116  // 0x74
+#define PEDAL_PROGRAM 117 // 0x75
+#define PEDAL_PANIC 118   // 0x76
+#define POT_LENGTH1 119   // 0x77
 #define POT_VOLUME_METRONOM 120    // 0x78
 #define POT_MUTE_CNT 121    // 0x79
 #define POT_SCAN_CNT 122    // 0x7A
 #define POT_CROSS_CNT 123    // 0x7B
 #define POT_CROSS_PRCNT 124    // 0x7C
 #define POT_METRONOM 125    // 0x7D
-
-#define PEDAL_AUTOTRESHOLD 109 // 0x6D
-#define PEDAL_SUSTAIN 114 // 0x72
-#define PEDAL_VOICE 115   // 0x73
-#define PEDAL_OCTAVE 116  // 0x74
-#define PEDAL_PROGRAM 117 // 0x75
-#define PEDAL_PANIC 118   // 0x76
 #define PEDAL_METRONOM1 126   // 0x7E
 #define PEDAL_METRONOM10 127   // 0x7F
 
@@ -73,7 +72,7 @@ volatile uint16_t buf_adc[BUFFER_CNT][NUM_ADC*2*NUM_MULTIPLEXORS]; // ДМА б�
 #define PEDAL_UP 0
 
 #define METRONOME_MIN 40 // минимум BPS
-#define METRONOME_MAX 210 // максимально BPS
+#define METRONOME_MAX 220 // максимально BPS
 
 volatile int multi_idx; // номер включенного мультиплексора
 volatile int last_milti_idx; // номер предыдущего (только что считанного) мультиплексора
@@ -127,6 +126,7 @@ struct stConfig {
   uint16_t max_level = 1800; // уровень сигнала, когда включаем красный светодиод
   uint8_t pedal_metronom1 = PEDAL_CENTER; // изменение метронома на 1 bps
   uint8_t pedal_metronom10 = PEDAL_CENTER; // изменение метронома на 10 bps
+  uint8_t metronom_enable = 1; // разрешение работать метроному
 //  uint8_t pusto; // // выровнять размер структуры на 16 бит !!!
 } cfg;
 
@@ -176,7 +176,9 @@ volatile bool adc_new_cycle; // выставляется в прерывании
 
 uint32_t tm_time, time_green, time_red, time_autotreshold, time_voice;
 
-const byte version[] = __DATE__;
+bool glo_SysExMaster=true;;
+
+byte version[] = __DATE__;
 
 /////////////////////////  Объявления функций //////////////////////////////////////
 
@@ -192,4 +194,6 @@ bool check_groups();
 void show_krutilki_adc();
 void show_krutilki();
 void show_krutilki_buf();
-
+void setup_module();
+void send_config_16();
+void send_version_17();

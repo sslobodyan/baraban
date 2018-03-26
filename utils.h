@@ -9,6 +9,7 @@ void print_adc_buffer(byte from, byte to) {
     }
   }  
   if ( ena == false ) return;
+  if (!cfg.show_debug) return;
   DBGserial.print("idx=");
   DBGserial.print(idx/2);
   DBGserial.print("  ");
@@ -25,7 +26,8 @@ void print_adc_buffer(byte from, byte to) {
 void fill_notes() { // присвоить используемым входам номера нот
   for (byte i=0; i<NUM_CHANNELS; i++) {
     if (i+cfg.start_note <= cfg.end_note) {
-      kanal[i].note = i+cfg.start_note;  
+      kanal[i].note = i+cfg.start_note; 
+      kanal[i].show = 0; 
     } else kanal[i].note = 0; // канал не используется
   }  
 }
@@ -91,6 +93,7 @@ void add_note(byte ch, uint16_t level) { // из прерывания строи
 }
 
 void show_buf(){ // чисто отладка
+  if (!cfg.show_debug) return;
   stop_scan = true;
   byte n = last_buf_idx;
   for (byte i=0; i<BUFFER_CNT; i++ ) {
@@ -143,12 +146,14 @@ byte idx_note=0;
       if ( ++idx_note >= NOTES_CNT) idx_note = 0;
       if ( group != notes[ idx_note ].group ) continue; 
       #ifdef SHOW_GROUPS_HIDE
-        DBGserial.print( notes[idx_note].kanal ); DBGserial.print(">"); DBGserial.print(notes[idx_note].level); 
-        DBGserial.print(" t "); 
-        DBGserial.print( notes[idx_note].cross_cnt );
-        DBGserial.print(" / ");
-        //DBGserial.print(notes[idx_note].cross_cnt);
-        //DBGserial.print(" / ");
+        if (cfg.show_debug) {
+          DBGserial.print( notes[idx_note].kanal ); DBGserial.print(">"); DBGserial.print(notes[idx_note].level); 
+          DBGserial.print(" t "); 
+          DBGserial.print( notes[idx_note].cross_cnt );
+          DBGserial.print(" / ");
+          //DBGserial.print(notes[idx_note].cross_cnt);
+          //DBGserial.print(" / ");
+        }
       #endif  
       if ( notes[idx_note].level > max_level ) {
         max_level = notes[idx_note].level;
@@ -156,7 +161,9 @@ byte idx_note=0;
       }
     }
     #ifdef SHOW_GROUPS_HIDE
-      DBGserial.println(); DBGserial.print("max ");DBGserial.println( notes[max_idx].kanal );
+      if (cfg.show_debug) {
+        DBGserial.println(); DBGserial.print("max ");DBGserial.println( notes[max_idx].kanal );
+      }
     #endif  
     // глушим все более слабые сигналы в той же группе, не превышающие процент
     uint16_t percent = max_level * cfg.cross_percent / 100;
@@ -169,13 +176,17 @@ byte idx_note=0;
           kanal[ notes[idx_note].kanal ].scan_cnt = cfg.scan_cnt+1; // mute fantom channel
           kanal[ notes[idx_note].kanal ].adc_max = 0;
           #ifdef SHOW_GROUPS_HIDE
-            DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
+            if (cfg.show_debug) {
+              DBGserial.print("x ");DBGserial.println( notes[idx_note].kanal );
+            }
           #endif            
         }
       }
     }
     #ifdef SHOW_GROUPS_HIDE
-      DBGserial.println();
+      if (cfg.show_debug) {
+        DBGserial.println();
+      }
     #endif  
     return true; // можно играть  
 }

@@ -21,10 +21,12 @@ void update_krutilki() { // обработать одну krutilka_idx-крут�
     // если запросили вывод SysEx о состоянии крутилок
     if ( krutilka[ krutilka_idx ].show ) {
       send_sysex_krutilka_08( krutilka_idx );
-      DBGserial.print("Kr_");
-      DBGserial.print(krutilka_idx);
-      DBGserial.print("=");
-      DBGserial.println(new_value);
+      if (cfg.show_debug) {
+        DBGserial.print("Kr_");
+        DBGserial.print(krutilka_idx);
+        DBGserial.print("=");
+        DBGserial.println(new_value);
+      }
     }
   }
   if ( ++krutilka_idx >= KRUTILKI_CNT ) krutilka_idx = 0;
@@ -411,6 +413,7 @@ void setup_krutilki() { // задать начальные параметры к
 }
 
 void show_krutilki_adc() {
+  if (!cfg.show_debug) return;
   DBGserial.println();
   DBGserial.println("Krutilki:");
   for (byte i=0; i<KRUTILKI_CNT; i++) {
@@ -431,6 +434,7 @@ void show_krutilki_adc() {
 }
 
 void show_krutilki() {
+  if (!cfg.show_debug) return;
   if ( tm_time < millis() ) {
     tm_time = millis() + 1000;
     DBGserial.println();
@@ -449,6 +453,7 @@ void show_krutilki() {
 }
 
 void show_krutilki_buf() {
+  if (!cfg.show_debug) return;
   if ( tm_time < millis() ) {
     tm_time = millis() + 1000;
     DBGserial.println();

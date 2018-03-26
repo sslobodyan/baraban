@@ -3,13 +3,16 @@
   "description": "Tune Baraban Modules",
   "version": "0.1",
   "manifest_version": 2,
+  "minimum_chrome_version": "33.0",
+  "offline_enabled": true,
   "app": {
     "background": {
       "scripts": ["background.js"]    }
   },
   "permissions": [
     "serial",
-    "fullscreen"
+    "fullscreen",
+	{"fileSystem": ["write"]}
   ],
   "icons": { "16": "calculator-16.png", "128": "calculator-128.png" }
 }

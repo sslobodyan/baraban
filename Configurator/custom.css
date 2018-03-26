@@ -26,6 +26,12 @@ td.piezDiapazon {
 	text-align:center;
 }
 
-div.mainHeader {
-	margin-bottom:10px;
+div#mainHeader {
+	padding-top:10px;
+	padding-bottom:10px;
+}
+
+#selMod span {
+	font-size:1em;
+   font-weight: bold; 
 }

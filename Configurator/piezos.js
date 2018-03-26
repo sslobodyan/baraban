@@ -4,7 +4,9 @@ var indexOfPiez = 0;
 const PiezCNT = 32;
 
 var GetOnePiez = function() {
-	var GetPiez =  [0xF0, 0x7D, 0x7F, 0x0E, indexOfPiez, 0xF7] ;
+    var module = getSelectedModule();
+    if (module == 127) return;
+	var GetPiez =  [0xF0, 0x7D, module , 0x0E, indexOfPiez, 0xF7] ;
     bb = new Uint8Array(GetPiez);
 	logSendCommand( bb );
 	chrome.serial.send(connectionId, bb, function( sendInfo ) {} );
@@ -21,7 +23,7 @@ var CreateTablePiez = function() {
 	var cl;
 	indexOfPiez = 0;
 	var tbody = $('#table_piez');
-	if ( $(tbody).find('.piezId').length != 0 ) { // таблица уже есть
+	if ( false & $(tbody).find('.piezId').length != 0 ) { // таблица уже есть
 		setTimeout(GetAllPiez, waitTime);
 	} 
 	else { // строим таблицу
@@ -62,12 +64,14 @@ var CreateTablePiez = function() {
 				var idx = $(this).data("tag");
 				this.addEventListener('click', function(){ LoadOnePiez(idx); } );
 			});
-		setTimeout(GetAllPiez, waitTime);
+		if (getSelectedModule() != 127) setTimeout(GetAllPiez, waitTime);
 	};
 };
 
 
 var SaveOnePiez = function( idx ) {
+    var module = getSelectedModule();
+	if (module == 127) return;
 	var t = $("#trPiez_"+idx);
 	var tresh = t.find(".piezTresh").find("input").val();
 	var vel1 = t.find(".piezVel1").find("input").val();
@@ -76,7 +80,7 @@ var SaveOnePiez = function( idx ) {
 	var group = t.find(".piezGroup").find("input").val();
 	var show = t.find(".piezShow").find("input:checked").length;
 
-    var cmd=[0xF0,0x7D,0x7F,0x06,idx,tresh>>7,tresh&0b1111111,vel1>>7,vel1&0b1111111,vel127>>7,vel127&0b1111111,note,group,show,0xF7] ;
+    var cmd=[0xF0,0x7D, module ,0x06,idx,tresh>>7,tresh&0b1111111,vel1>>7,vel1&0b1111111,vel127>>7,vel127&0b1111111,note,group,show,0xF7] ;
     bb = new Uint8Array(cmd);
 	logSendCommand( bb );
 	chrome.serial.send(connectionId, bb, function( sendInfo ) {} );

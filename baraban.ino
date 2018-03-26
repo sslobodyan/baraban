@@ -37,6 +37,7 @@ void setup() {
   RED_OFF;
 
   setup_module();
+  byte pin_module = cfg.module; // запоминаем тип модуля по перемычкам 
   
   stop_scan = false;
   setup_kanal();
@@ -69,8 +70,18 @@ void setup() {
   DBGserial.print(" / ");
   DBGserial.println( sizeof(krutilka)/2 );
   read_cfg_from_eprom();
+
   read_krutilka_from_eprom();
   read_kanal_from_eprom();
+
+  if (pin_module != cfg.module) {
+    // запомненный тип не совпадает с перемычками - надо сменить ноты
+    setup_module();
+    fill_notes(); 
+  }
+
+  send_version_17();
+  
   DBGserial.println("Restored");
   
 }
@@ -133,6 +144,7 @@ void main_loop(){
       if (  millis() - time_autotreshold >= cfg.autotreshold_time ) { // прошло время автотрешолда
         scan_autotreshold = false;
         RED_OFF;
+        // вывод набранных порогов в отладку
         for (byte i=0; i<NUM_CHANNELS; i++) {
           kanal[i].treshold = kanal[i].adc_max + cfg.autotreshold_above;
           kanal[i].velocity1 = kanal[i].treshold + 50;
@@ -208,11 +220,16 @@ void main_loop(){
     }
   }
 
-  if (( cfg.metronom > 0) && (cfg.metronom_volume >= 5)) {
+  if ( cfg.metronom_enable && ( cfg.metronom > 0) && (cfg.metronom_volume >= 5)) {
     if ( millis() - old_metronom >= cfg.metronom ) {
       #define METRONOM_HARD 35
       #define METRONOM_SOFT 25
-      old_metronom += cfg.metronom;
+      if ( millis() - old_metronom >= cfg.metronom * 2) {
+        // долго не играли - стартуем отсюда
+        old_metronom = millis();
+      } else { // продолжаем - синхронизацию не нарушаем
+        old_metronom += cfg.metronom;
+      }
       if ( cfg.metronom_krat ) {
         if ( ++metronom_krat == cfg.metronom_krat ) { // сильная доля
           metronom_krat = 0;

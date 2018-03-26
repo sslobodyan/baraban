@@ -72,23 +72,7 @@ void doControlChangeMaster(byte channel, byte number, byte value) {
 }
 
 void doControlChangeSlave(byte channel, byte number, byte value) {
-    // обработаем если есть что-то интересное для нас от рабов
-    switch (number) {
-      case CC_FOOT_PEDAL:  cfg.pedal = value; 
-                      changePedalSustain();
-                      break;
-      case CC_NOTE_LENGTH0: cfg.noteoff_time0 = value * 100;
-                      break;
-      case CC_NOTE_LENGTH1: cfg.noteoff_time1 = value * 100;
-                      break;
-      case CC_VOICE_PEDAL: cfg.pedal_voice = value;
-                      break;                      
-      case CC_VELOCITY1: cfg.velocity1 = value * 8;
-                      break;
-      case CC_VELOCITY127: cfg.velocity127 = value * 8;
-                      break;
-      default: break;
-    }
+  doControlChangeMaster( channel, number, value);
 }
 
 void doNoteOnMaster(byte channel, byte note, byte velocity) {
@@ -215,8 +199,9 @@ void note_off(byte ch) {
   MIDI_Master.sendNoteOff( kanal[ch].note , 0, DRUMS);
 }
 
-void send_SysEx(byte size, byte *arr) { // выслать системное сообщение 
-  MIDI_Master.sendSysEx(size, arr, false);
+void send_SysEx(byte size, byte *arr) { // выслать системное сообщение
+  if (glo_SysExMaster) MIDI_Master.sendSysEx(size, arr, false);
+  else  MIDI_Slave.sendSysEx(size, arr, false);
 }
 
   

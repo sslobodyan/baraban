@@ -5,7 +5,9 @@ var indexOfPot = 0;
 const PotsCNT = 16;
 
 var GetOnePot = function() {
-	var GetOnePot =  [0xF0, 0x7D, 0x7F, 0x0F, indexOfPot, 0xF7] ;
+	var module = getSelectedModule();
+	if (module == 127) return;
+	var GetOnePot =  [0xF0, 0x7D, module, 0x0F, indexOfPot, 0xF7] ;
     bb = new Uint8Array(GetOnePot);
 	logSendCommand( bb );
 	chrome.serial.send(connectionId, bb, function( sendInfo ) {} );
@@ -22,7 +24,7 @@ var CreateTablePots = function() {
 	var cl;
 	indexOfPot = 0;
 	var tbody = $('#table_pots');
-	if ( $(tbody).find('.potId').length != 0 ) { // таблица уже есть
+	if ( false & $(tbody).find('.potId').length != 0 ) { // таблица уже есть
 		setTimeout(GetAllPot, waitTime);
 	} 
 	else { // строим таблицу
@@ -57,12 +59,14 @@ var CreateTablePots = function() {
 				var idx = $(this).data("tag");
 				this.addEventListener('click', function(){ LoadOnePot_01(idx); } );
 			});
-		setTimeout(GetAllPot, waitTime);
+		if (getSelectedModule() != 127) setTimeout(GetAllPot, waitTime);
 	};
 };
 
 
 var SaveOnePot_01 = function( idx ) {
+    var module = getSelectedModule();
+	if (module == 127) return;
 	var t = $("#trPot_"+idx);
 	//console.log(t);
 	var typePot = t.find(".potType").find(":selected").val();
@@ -70,7 +74,7 @@ var SaveOnePot_01 = function( idx ) {
 	var vel127 = t.find(".potVel127").find("input").val();
 	var gist = t.find(".potGist").find("input").val();
 	var show = t.find(".potShow").find("input:checked").length;
-    var cmd =  [0xF0, 0x7D, 0x7F, 0x01, idx, typePot, vel1 >> 7, vel1 & 0b1111111, vel127 >> 7, vel127 & 0b1111111, gist, show , 0xF7] ;
+    var cmd =  [0xF0, 0x7D, module , 0x01, idx, typePot, vel1 >> 7, vel1 & 0b1111111, vel127 >> 7, vel127 & 0b1111111, gist, show , 0xF7] ;
     bb = new Uint8Array(cmd);
 	logSendCommand( bb );
 	chrome.serial.send(connectionId, bb, function( sendInfo ) {} );

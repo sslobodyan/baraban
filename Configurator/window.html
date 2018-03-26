@@ -21,6 +21,7 @@
 <body>
 
 <div class="container small" >
+
 	<div id="led" style="width:10px;
         height: 10px;
 		border-radius: 5px;
@@ -31,30 +32,56 @@
 		top: 1em;
 		">
 	</div>
-	<div class="mainHeader">
-	  	<h4>
-		Configurator
-		</h4>
-		<select id="portList"></select>
-		<button id="open" data-tag="1" class="btn btn-primary" style="width:10em">Open port</button>
-		<span style="margin-left:100px">
+
+
+	<div id="mainHeader" class="row">	
+		<div class="col-sm-2">
+			<h4>Configurator</h4>
+		</div>	
+		
+		<div class="col-sm-3">			
+			<select id="portList"></select>
+			<button id="open" data-tag="1" class="btn btn-primary" style="width:7em">Open port</button>
+		</div>	
+		
+		<div class="col-sm-2">
 			<button id="saveConfig" class="conn btn btn-danger" style="display:none" >Save config</button>
-		</span>
+		</div>
+
+		<div class="col-sm-3">
+			<button id="saveToFile" class=" btn " style="display:none; width:6em" >ToFile</button>
+			<button id="loadFromFile" class=" btn " style="display:none; width:6em" >FromFile</button>
+		</div>
+		
+		<div class="col-sm-2" >
+			<div id="selMod" class="conn" style="display:none">
+				<span>Module</span>
+				<select id="selectModule" class="conn">
+					<option value=72 selected="selected">72</option>
+					<option value=60>60</option>
+					<option value=48>48</option>
+					<option value=36>36</option>
+				</select>
+			</div>	
+		</div>
 	</div>
-
-	<ul class="nav nav-tabs">
-	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#home">Controllers & Metronome</a></li>
-	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Piezos">Piezos</a></li>
-	  <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
-	</ul>
-
-  <div class="tab-content">
-    <div id="home" class="tab-pane fade"></div>
-    <div id="Piezos" class="tab-pane fade"></div>
-    <div id="Pots" class="tab-pane fade"></div>
-  </div>
 	
+	<div class="row">	
+		<div class="col-sm-12">
+			<ul class="nav nav-tabs">
+				<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#home">Controllers & Metronome</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Piezos">Piezos</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#Pots">Pots & Pedals</a></li>
+			</ul>
 
+			<div class="tab-content">
+				<div id="home" class="tab-pane fade"></div>
+				<div id="Piezos" class="tab-pane fade"></div>
+				<div id="Pots" class="tab-pane fade"></div>
+			</div>
+		</div>
+	</div>
+	
 </div>
 
 </body>

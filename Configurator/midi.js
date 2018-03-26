@@ -11,13 +11,12 @@ var Command = CommandEnum.Nothing;
 var CommandIdx = 0;
 var midiNote = new Array(10);
 
-
 var doMidiHandler = function(buf) {
   if (buf) {
     //console.log(buf);
-    s = buf;
+    //s = buf;
 
-	//var l=""; //for (var i=0; i<buf.length; i++) {l+=buf[i]+",";}  AddLog(l);
+	//var l="handler "; for (var i=0; i<buf.length; i++) {l+=buf[i]+",";}  AddLog(l);
 
 	while ( buf.length > 0 ) {
 		//l+=buf[0]+",";
@@ -36,7 +35,9 @@ var doMidiHandler = function(buf) {
 							if (Command == CommandEnum.SysEx) { // уже принмаем
 								if ( buf[0] == 0xF7 ) {
 									// принят конец пакета
-									doSysEx( buf[0] );
+									cmd.push(buf[0]);
+									doSysEx( cmd );
+									Command = CommandEnum.Nothing;
 								} else {
 									// ошибочный пакет - отбрасываем
 									CommandIdx = 0;
@@ -45,8 +46,8 @@ var doMidiHandler = function(buf) {
 							} else { // новая сиська
 								if ( buf[0] == 0xF0 ) {
 									// начинаем прием сисекса
-									midiSysEx = new Array();
-									doSysEx( buf[0] );
+									cmd = new Array();
+									cmd.push(buf[0]);
 									Command = CommandEnum.SysEx;
 								} else {
 									// ошибочный пакет - отбрасываем
@@ -77,7 +78,7 @@ var doMidiHandler = function(buf) {
 						doNoteOff(buf[0]);
 						break;
 				case CommandEnum.SysEx:
-						doSysEx(buf[0]);
+ 						cmd.push( buf[0] );
 						break;
 				case CommandEnum.ControlChange:
 						doControlChange(buf[0]);
@@ -85,7 +86,8 @@ var doMidiHandler = function(buf) {
 				case CommandEnum.ProgramChange:
 						doProgramChange(buf[0]);
 						break;
-				default: ;
+				default: 	
+						$("#console").val( $("#console").val()+"^"+buf[0]+"," );
 			}
        	}
 		// убираем обработанный байт
@@ -125,15 +127,13 @@ var doNoteOff = function(dat) {
 };
 
 var doSysEx = function(dat) {
-	midiSysEx.push(dat);
-	if (dat == 0xF7) { // конец сиськи
-		s = "SysEx ";
-		for (var i=0; i<midiSysEx.length; i++) {
-			s += midiSysEx[i] + ",";
-		}
-		AddLog(s);
-		SysExHandler();
-	}
+	SysExHandler( dat );
+};
+
+var showSysEx = function(dat) {
+	var s = "Sys "+dat;
+	s = s.replace(new RegExp(",",'g'), " "); // глобально меняем , на пробел
+	AddLog(s);
 };
 
 var doControlChange = function(dat) {
@@ -149,33 +149,43 @@ var doProgramChange = function(dat) {
 	Command = CommandEnum.Nothing;	
 };
 
-var SysExHandler = function() {
-	switch ( midiSysEx[3] ) {
+var SysExHandler = function( dat ) {
+	switch ( dat[3] ) {
 		case 0x11:
-				handler_11();
+				showSysEx( dat );
+				handler_11( dat );
 				break;
 		case 0x08:
-				handler_08();
+				showSysEx( dat );
+				handler_08( dat );
 				break;
 		case 0x07:
-				handler_07();
+				showSysEx( dat );
+				handler_07( dat );
 				break;
 		case 0x10:
-				handler_10();
+				showSysEx( dat );
+				handler_10( dat );
 				break;
 		case 0x14:
-				handler_14();
+				showSysEx( dat );
+				handler_14( dat );
 				break;
 		case 0x16:
-				handler_16();
+				showSysEx( dat );
+				handler_16( dat );
+				break;
+		case 0x17:
+				showSysEx( dat );
+				handler_17( dat );
 				break;
 		default:
-				handler_other();
+				handler_other( dat );
 	}
 }
 
 
-var handler_11 = function() { // параметры крутилки
+var handler_11 = function( midiSysEx ) { // параметры крутилки
 	var id = midiSysEx[4];
 	var adc = (midiSysEx[5] << 7) + midiSysEx[6];
     var value = getValuePot( midiSysEx[7] );
@@ -201,7 +211,7 @@ var handler_11 = function() { // параметры крутилки
 	}
 }
 
-var handler_08 = function() {
+var handler_08 = function( midiSysEx ) {
 	var id = midiSysEx[4];
     var value = getValuePot( midiSysEx[5] );
 	var adc = (midiSysEx[6] << 7) + midiSysEx[7];
@@ -212,7 +222,7 @@ var handler_08 = function() {
 	}
 }
 
-var handler_10 = function() { // параметры пьеза
+var handler_10 = function( midiSysEx ) { // параметры пьеза
 
 	var id = midiSysEx[4];
 
@@ -257,7 +267,8 @@ var handler_10 = function() { // параметры пьеза
 	}
 }
 
-var handler_07 = function() {
+var handler_07 = function( midiSysEx ) {
+	if ( midiSysEx[2] != getSelectedModule()	) return;
 	var id = midiSysEx[4]; // номер входа
 	var adc = (midiSysEx[5] << 7) + midiSysEx[6];
     t = $("#trPiez_"+id);
@@ -272,7 +283,7 @@ var update_slider = function(ccNum, ccVal) {
 		$("#numVoice").html(ccVal);
 	}
 	if (ccNum == 110) { // темп
-		var t= 40.0 + (210.0-40.0) / 128.0 * ccVal;
+		var t= 40.0 + (220.0-40.0) / 128.0 * ccVal - 0.5;
 	    t = t.toFixed(0);
 		//if (t<100) t = '0'+ccVal;
 		$("#metronomTempo").html(t);
@@ -290,17 +301,17 @@ var handlerCC = function(ccNum, ccVal) { // пришел Control Change
 	update_slider(ccNum, ccVal);
 }
 
-var handler_other = function() {
-	AddLog("Unknown SysEx "+midiSysEx[3]);
+var handler_other = function( midiSysEx ) {
+	//AddLog("Unknown SysEx "+midiSysEx[3]);
 }
 
-var handler_14 = function() {
+var handler_14 = function( midiSysEx ) {
     var t=$("#console");
 	t.val( "Calibrate - freeze!!!\n" );
 }
 
-var handler_16 = function() {
-	AddLog( "Config" );
+var handler_16 = function( midiSysEx ) {
+	//AddLog( "Config" );
 	var noteoff0 = midiSysEx[4];
 	update_slider(3, noteoff0);
 
@@ -359,4 +370,13 @@ var handler_16 = function() {
 	var ped_metro1 = midiSysEx[24];
 	var ped_metro10 = midiSysEx[25];
 
+}
+
+var	handler_17 = function( midiSysEx ) {
+    var s = "Module "+midiSysEx[2]+" Version ";
+	for (var i=4; i<30; i++) {
+		if ( midiSysEx[i] == 0 ) break;
+		s += String.fromCharCode(midiSysEx[i]);
+	}
+	AddLog(s);
 }

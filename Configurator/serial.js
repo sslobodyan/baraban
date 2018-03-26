@@ -18,6 +18,9 @@ var AddLog = function(dat) {
 	if (enableConsoleUpdate == true) $("#console").val( $("#console").val() + dat + "\n" );
 }
 
+var getSelectedModule = function() {
+	return $("#selectModule").find(":selected").val();
+}
 
 var ConnectComplete = function(connectionInfo) {
   if (!connectionInfo) {
@@ -86,8 +89,8 @@ var doDisconnect = function() {
 };
 
 var logSendCommand =  function( dat ){
-	var s=" -> Send ";
-	for (var i=0; i<dat.length; i++) s += dat[i] + ",";
+	var s=" -> Send " + dat[2]+"/"+dat[3];
+	//for (var i=0; i<dat.length; i++) s += dat[i] + ",";
 	AddLog( s );	
 }
 
